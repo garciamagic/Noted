@@ -59,6 +59,8 @@
   .gpill{height:44px;border-radius:22px;display:flex;align-items:center;gap:22px;padding:0 15px;
     background:var(--glass);border:.5px solid var(--glassb);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);color:var(--ink)}
   .circ svg,.gpill svg{width:22px;height:22px}
+  #poemDots{padding:10px;margin:-10px;box-sizing:content-box;cursor:pointer}
+  #homeDots{cursor:pointer}
 
   /* ---------- home ---------- */
   .home-head{padding:2px 16px 0}
@@ -218,7 +220,7 @@
 <div id="home" class="screen on">
   <div class="topbar">
     <div class="circ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></svg></div>
-    <div class="circ"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></div>
+    <div class="circ" id="homeDots"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></div>
   </div>
   <div class="home-head">
     <h1 id="h-title">Notes</h1>
@@ -243,7 +245,7 @@
     <div class="circ" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></svg></div>
     <div class="gpill">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M6 11H5v9h14v-9h-1"/></svg>
-      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+      <svg id="poemDots" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
     </div>
   </div>
   <div class="notebody">
@@ -270,7 +272,7 @@
 
 <div id="debug"></div>
 
-<!-- ================= HIDDEN SETTINGS (hold the "Notes" title or the poem's date) ================= -->
+<!-- ================= HIDDEN SETTINGS (tap the ••• button) ================= -->
 <div id="settings">
   <div class="pg-head"><h2>Settings</h2><button class="pg-btn" id="closeSettings">Done</button></div>
   <div class="pg-body" id="settingsBody">
@@ -336,6 +338,8 @@
       <div class="mc-body">
         <div class="mode"><span><b>Face-down restart</b><small>Turn the phone face down to start listening again</small></span><label class="pill"><input type="checkbox" id="f-flipOn"><span></span></label></div>
         <div class="mode"><span><b>Automatic restart</b><small>If they read “<span class="ph-word">you</span>”, start listening again by itself</small></span><label class="pill"><input type="checkbox" id="f-readSwitch"><span></span></label></div>
+        <div class="mode" id="adRow"><span><b>Wait before listening</b><small>Seconds after they finish, so they don't see the orange dot come on</small></span>
+          <div class="stepper"><button id="adMinus" aria-label="Less">−</button><output id="adVal">5</output><button id="adPlus" aria-label="More">+</button></div></div>
       </div>
     </div>
 
@@ -430,7 +434,7 @@
     <h2 class="part">Part 1: Setting Up</h2>
     <ol class="steps">
       <li><b>Put it on your home screen.</b> Upload the Noted folder to your host (the same way as OneLock), open the link in Safari, then tap Share → <b>Add to Home Screen</b>. It shows up as “Noted”.</li>
-      <li><b>Open Settings.</b> Hold the big <b>Notes</b> title for 1 second. Set your phrases and your notes list.</li>
+      <li><b>Open Settings.</b> Tap the <b>•••</b> button at the top right, on the Notes list or the poem. Set your phrases and your notes list.</li>
       <li><b>Allow permissions.</b> In Settings → <b>Permissions</b>, tap <b>Allow</b> for Microphone, and for Motion if you use face-down restart. Do this again any time you've fully closed Noted.</li>
       <li><b>Rehearse.</b> Turn on Rehearsal Mode and run the routine out loud a few times. Turn it off when you're done.</li>
     </ol>
@@ -454,8 +458,7 @@
 
     <h2 class="part">Controls</h2>
     <table class="ctrl">
-      <tr><td>Hold “Notes” title</td><td>Settings</td></tr>
-      <tr><td>Hold the poem's date</td><td>Settings</td></tr>
+      <tr><td>Tap •••</td><td>Settings</td></tr>
       <tr><td>Double-tap the poem</td><td>Start listening (after the reveal: Maybe Mode)</td></tr>
       <tr><td>Back button on poem</td><td>Reset for the next person</td></tr>
       <tr><td>Phone face down</td><td>Maybe Mode listens again</td></tr>
@@ -472,7 +475,7 @@
   /* ================= SETTINGS DATA ================= */
   var DEFAULTS = {
     trigger:"remind you of anyone", lock:"interesting", placeholder:"you", timeout:8,
-    maybeOn:true, flipOn:true, readSwitch:true, maybeFormat:"sentence", maybePrefix:"Maybe",
+    maybeOn:true, flipOn:true, readSwitch:true, autoDelay:5, maybeFormat:"sentence", maybePrefix:"Maybe",
     maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"nice",
     liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
     maybeList:[{d:74,text:"Alina will think of Kate"},{d:80,text:"Maybe John"},{d:82,text:"Something like Cat or Kate"},{d:95,text:"Alex"}],
@@ -491,6 +494,7 @@
   var cfg = clone(DEFAULTS);
   try { Object.assign(cfg, JSON.parse(localStorage.getItem("youPoemCfg4") || "{}")); } catch(e){}
   if (!Array.isArray(cfg.homeNotes)) cfg.homeNotes = clone(DEFAULTS.homeNotes);
+  if (typeof cfg.autoDelay !== "number") cfg.autoDelay = 5;
   if (!Array.isArray(cfg.maybeList)) cfg.maybeList = clone(DEFAULTS.maybeList);
   if (!/^\d{1,2}:\d{2}$/.test(cfg.poemTime||"")) cfg.poemTime = DEFAULTS.poemTime;
   function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} }
@@ -633,7 +637,7 @@
 
   function resetState(){
     slots.forEach(function(s){ clearTimeout(s.timer); });
-    clearTimeout(readTimer); readTimer = null;
+    clearTimeout(readTimer); readTimer = null; clearTimeout(delayTimer);
     phase = 1; gen++; history = ""; sessionFinal = ""; lastInterim = ""; cur = "";
     slots = [mkSlot("them1", val("trigger"), val("lock"))];
     nameEl.textContent = val("placeholder");
@@ -687,7 +691,8 @@
     log();
   }
 
-  function enterMaybe(){
+  var delayTimer = null;
+  function enterMaybe(delayMs){
     if (!cfg.maybeOn || phase === 2 || phase === 3) return;
     slots.forEach(function(s){ clearTimeout(s.timer); s.status = "locked"; });
     phase = 2; gen++;
@@ -696,8 +701,15 @@
     if (cfg.maybeFormat === "sentence") slots.push(mkSlot("me2", val("meTrigger"), cfg.meLock));
     slots = slots.concat(keep);
     renderMaybe();
-    armed = true;
-    startMic();
+    clearTimeout(delayTimer);
+    if (delayMs > 0 && !running) {
+      // the mic is off right now: wait, so the orange dot doesn't appear as they finish reading
+      var g = gen;
+      delayTimer = setTimeout(function(){ if (g === gen && phase === 2) { armed = true; startMic(); log(); } }, delayMs);
+    } else {
+      armed = true;
+      startMic();
+    }
     log();
   }
 
@@ -807,7 +819,9 @@
     });
   }
   function onFlip(){
-    if (poemOpen && cfg.maybeOn && cfg.flipOn && (phase === 1 || phase === 1.5)) enterMaybe();
+    if (!poemOpen || !cfg.maybeOn || !cfg.flipOn) return;
+    if (phase === 1 || phase === 1.5) enterMaybe();
+    else if (phase === 2 && !running) { clearTimeout(delayTimer); armed = true; startMic(); }   // skip the wait
   }
 
   /* ================= "THEY READ THE LAST LINE" ================= */
@@ -821,7 +835,7 @@
           if (g !== gen || phase !== 1) return;
           var s = slot("them1");
           if (s && s.cand) lockSlot(s);
-          else if (cfg.maybeOn && cfg.readSwitch) enterMaybe();
+          else if (cfg.maybeOn && cfg.readSwitch) enterMaybe((cfg.autoDelay||0) * 1000);
         }, 2500);
       });
     }, {threshold: 1}).observe(nameEl);
@@ -841,6 +855,7 @@
     askMotion();          // inside a tap, so iPhone allows it
     if (phase === 1.5) { enterMaybe(); return; }   // after the reveal, a double-tap starts Maybe Mode
     if (phase !== 1 && phase !== 2) return;
+    clearTimeout(delayTimer);
     armed = true;
     startMic();
   }
@@ -965,6 +980,8 @@
     $("autoOn").checked = cfg.timeout > 0;
     $("toVal").textContent = cfg.timeout > 0 ? cfg.timeout : lastTimeout;
     $("daVal").textContent = cfg.liveDaysBefore;
+    $("adVal").textContent = cfg.autoDelay;
+    $("adRow").style.display = cfg.readSwitch ? "" : "none";
     var pdTxt = mmdd(maybeDate(0));
     $("daNote").innerHTML = cfg.liveDaysBefore === 0
       ? "Days before the poem's date. The new entry gets the same date as the poem note (<b>" + pdTxt + "</b>)."
@@ -1089,6 +1106,8 @@
   $("fmtSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.maybeFormat = b.dataset.v; setSeg("fmtSeg", cfg.maybeFormat); saveCfg(); renderPreviews(); });
   $("autoOn").addEventListener("change", function(){ cfg.timeout = $("autoOn").checked ? (lastTimeout || 8) : 0; saveCfg(); renderSteppers(); });
   stepper("toMinus","toPlus", function(){ return cfg.timeout || lastTimeout; }, function(v){ cfg.timeout = v; lastTimeout = v; }, 2, 30);
+  stepper("adMinus","adPlus", function(){ return cfg.autoDelay; }, function(v){ cfg.autoDelay = v; }, 0, 30);
+  $("f-readSwitch").addEventListener("change", renderSteppers);
   stepper("daMinus","daPlus", function(){ return cfg.liveDaysBefore; }, function(v){ cfg.liveDaysBefore = v; }, 0, 60);
   $("daMinus").addEventListener("click", renderMaybeEd); $("daPlus").addEventListener("click", renderMaybeEd);
   $("pdMinus").addEventListener("click", function(){ cfg.poemDays = Math.max(0, cfg.poemDays - 1); saveCfg(); renderSettingsLists(); });
@@ -1114,7 +1133,11 @@
     renderNotesEd();
   }
 
-  /* --- secret entry: hold the title or the poem's date --- */
+  /* --- secret entry: tap the ••• button (home screen or poem) --- */
+  ["homeDots","poemDots"].forEach(function(id){
+    $(id).addEventListener("click", function(e){ e.stopPropagation(); openSettings(); });
+    $(id).addEventListener("touchend", function(e){ e.stopPropagation(); }, {passive:true});
+  });
   function holdToOpen(target){
     var t = null;
     function down(){ t = setTimeout(openSettings, 900); }
@@ -1124,7 +1147,7 @@
     target.addEventListener("mousedown", down); target.addEventListener("mouseup", up);
     target.addEventListener("contextmenu", function(e){ e.preventDefault(); });
   }
-  holdToOpen($("h-title")); holdToOpen($("date"));
+
 
   /* ================= START ================= */
   resetState();
