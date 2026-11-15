@@ -92,7 +92,22 @@
   .notebody{padding:0 20px calc(env(safe-area-inset-bottom) + 90px)}
   .date{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 18px}
   .notebody h1{font-size:28px;font-weight:700;margin:0 0 18px}
-  .stanza{font-size:17px;line-height:1.5;margin:0 0 22px}
+  .stanza{font-size:17px;line-height:1.5;margin:0 0 22px;white-space:normal}
+  .notebody{padding-bottom:calc(env(safe-area-inset-bottom) + 120px)}
+  .notephoto{display:block;margin:34px 6px 34px;}
+  .notephoto img{display:block;width:100%;height:auto;-webkit-user-drag:none;pointer-events:none}
+  .notebar{display:none;justify-content:space-between;background:linear-gradient(transparent, var(--notebg) 45%)}
+  body.in-poem .notebar{display:flex}
+  body.in-settings .notebar{display:none}
+  .notebar .tools{height:50px;border-radius:25px;gap:34px;padding:0 24px}
+  .notebar .tools svg{width:26px;height:26px}
+  .row.has-thumb{padding-right:84px}
+  .row .thumb{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:8px;object-fit:cover}
+  .photo-pick{display:flex;gap:12px;align-items:center;margin-top:12px}
+  .photo-pick img{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#36383c;flex:none}
+  .photo-pick .ph-empty{width:72px;height:72px;border-radius:10px;background:#36383c;display:flex;align-items:center;justify-content:center;color:#6f7176;font-size:12px;flex:none;text-align:center}
+  .photo-pick .btns2{display:flex;flex-direction:column;gap:8px}
+  textarea.inp{min-height:260px;line-height:1.45;font-size:16px;resize:vertical}
   .gap{height:62vh}
   .maybe{font-size:17px;line-height:1.5}
   .maybe .hd{margin-bottom:6px}
@@ -264,15 +279,7 @@
   </div>
   <div class="notebody">
     <div class="date" id="date"></div>
-    <h1 id="p-title">YOU</h1>
-    <p class="stanza">There’s a voice I seem to know by heart,<br>That feels like home when we’re apart.<br>A certain laugh, a certain smile,<br>That makes the world stop for a while.</p>
-    <p class="stanza">There’s a way you seem to say my name,<br>That makes the old days feel the same.<br>You know the things I try to hide,<br>And see the me I keep inside.</p>
-    <p class="stanza">You know the stories I forget,<br>The ones we haven’t written yet.<br>You find the words I fail to say,<br>And somehow hear them anyway.</p>
-    <p class="stanza">You make the little moments last,<br>The future now, the present past.<br>You find the right side of my wrong,<br>You make a short goodbye feel long.</p>
-    <p class="stanza">You know the sound of being there,<br>The little ways you show you care.<br>A look, a joke, a passing glance,<br>A second thought, a second chance.</p>
-    <p class="stanza">You’re inside every photograph,<br>In every song, in every laugh.<br>In every day, and every year.<br>In every smile, and every tear.</p>
-    <p class="stanza">You turn my silence into sound,<br>And make my lost feel like my found.<br>You make a lifetime feel so fast,<br>And every moment seem to last.</p>
-    <p class="stanza">If forever had another day,<br>And another day could never fade,<br>I’d give forever just one name,<br>I’d call it <span id="name">you</span>, and you’re to blame.</p>
+    <div id="noteContent"></div>
     <div id="maybeWrap">
       <div class="gap"></div>
       <div class="maybe">
@@ -281,6 +288,15 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="bottombar notebar" id="noteBar">
+  <div class="gpill tools">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="7" r="2.6"/><path d="M3.9 7l.8.8 1.5-1.6"/><circle cx="5" cy="17" r="2.6"/><path d="M10.5 7H21M10.5 17H21"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5l-7.8 7.8a5 5 0 01-7.1-7.1l8.5-8.5a3.3 3.3 0 014.7 4.7l-8.5 8.5a1.7 1.7 0 01-2.4-2.4l7.8-7.8"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 17.5L12 7l3.5 10.5M9.6 14.5h4.8"/></svg>
+  </div>
+  <div class="circ compose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5"/><path d="M17.5 3.5a2.1 2.1 0 013 3L12 15l-4 1 1-4z"/></svg></div>
 </div>
 
 <div id="debug"></div>
@@ -299,6 +315,42 @@
       <div class="mode"><span><b>Microphone</b><small id="micStatus">Not allowed yet</small></span><span id="micSlot"><button class="gbtn blue" id="allowMic">Allow</button></span></div>
       <div class="mode" id="motionRow"><span><b>Motion</b><small id="motionStatus">For face-down start</small></span><span id="motionSlot"><button class="gbtn blue" id="allowMotion">Allow</button></span></div>
       <p class="note">If you fully close Noted (swipe it away), tap Allow again.</p>
+    </div>
+
+    <!-- ===== TRICK NOTE ===== -->
+    <div class="group" id="g-note">
+      <button class="group-head"><span><b>Trick Note</b><small id="sum-note"></small></span><span class="chev">›</span></button>
+      <div class="group-body">
+        <div class="subsec">
+          <h4>Title</h4>
+          <input class="inp" id="f-poemTitle" autocomplete="off" placeholder="No title">
+          <p class="note">Shown big at the top of the note and in the Notes list. Leave blank for a photo-only note.</p>
+        </div>
+        <div class="subsec">
+          <h4>Text</h4>
+          <textarea class="inp" id="f-noteText" spellcheck="false"></textarea>
+          <p class="note">A blank line starts a new stanza. Type <b>[NAME]</b> where the name goes in Name Mode. Leave it empty for a photo-only note.</p>
+          <div class="btn-row"><button class="gbtn" id="resetPoem">Use the YOU poem</button></div>
+        </div>
+        <div class="subsec">
+          <h4>Photo</h4>
+          <p class="sub">A poem, a page from a book, or a photo of anything. It shows the way Notes shows an attached picture.</p>
+          <div class="photo-pick">
+            <span id="photoThumb"><span class="ph-empty">No photo</span></span>
+            <div class="btns2">
+              <label class="gbtn blue" style="position:relative;overflow:hidden">Choose Photo<input type="file" accept="image/*" id="photoInput" style="position:absolute;inset:0;opacity:0"></label>
+              <button class="gbtn red" id="photoRemove">Remove</button>
+            </div>
+          </div>
+          <div id="photoPosWrap" style="margin-top:12px"><div class="seg" id="photoPosSeg"><button data-v="above">Photo above text</button><button data-v="below">Photo below text</button></div></div>
+        </div>
+        <div class="subsec">
+          <h4>Word in place of [NAME]</h4>
+          <input class="inp" id="f-placeholder" autocomplete="off">
+          <div class="preview"><small>That line</small><span id="pv-last"></span></div>
+          <p class="note warn" id="nameWarn" style="display:none"><b>Heads up:</b> the text has no [NAME], so Name Mode has nowhere to put the name. The list still works.</p>
+        </div>
+      </div>
     </div>
 
     <!-- ===== LISTENING ===== -->
@@ -388,14 +440,11 @@
           <div class="mode"><b>“Pinned” row</b><label class="pill"><input type="checkbox" id="f-showPinned"><span></span></label></div>
         </div>
         <div class="subsec">
-          <h4>Poem Note</h4>
-          <label class="fld"><span>Title</span><input class="inp" id="f-poemTitle" autocomplete="off"></label>
+          <h4>Trick Note Date</h4>
           <div class="mode"><b>Day</b>
             <div class="stepper"><button id="pdMinus" aria-label="Earlier">−</button><output id="pdVal" class="wide">Today</output><button id="pdPlus" aria-label="Later">+</button></div></div>
           <div class="mode"><b>Time</b><input class="inp time" id="f-poemTime" type="time"></div>
           <p class="note" id="pdNote"></p>
-          <label class="fld"><span>Last word of the poem</span><input class="inp" id="f-placeholder" autocomplete="off"></label>
-          <div class="preview"><small>Last line</small><span id="pv-last"></span></div>
         </div>
         <div class="subsec">
           <h4>Other Notes</h4>
@@ -486,13 +535,14 @@
   function el(tag, cls, text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
 
   /* ================= SETTINGS DATA ================= */
+  var YOU_POEM = "There’s a voice I seem to know by heart,\nThat feels like home when we’re apart.\nA certain laugh, a certain smile,\nThat makes the world stop for a while.\n\nThere’s a way you seem to say my name,\nThat makes the old days feel the same.\nYou know the things I try to hide,\nAnd see the me I keep inside.\n\nYou know the stories I forget,\nThe ones we haven’t written yet.\nYou find the words I fail to say,\nAnd somehow hear them anyway.\n\nYou make the little moments last,\nThe future now, the present past.\nYou find the right side of my wrong,\nYou make a short goodbye feel long.\n\nYou know the sound of being there,\nThe little ways you show you care.\nA look, a joke, a passing glance,\nA second thought, a second chance.\n\nYou’re inside every photograph,\nIn every song, in every laugh.\nIn every day, and every year.\nIn every smile, and every tear.\n\nYou turn my silence into sound,\nAnd make my lost feel like my found.\nYou make a lifetime feel so fast,\nAnd every moment seem to last.\n\nIf forever had another day,\nAnd another day could never fade,\nI’d give forever just one name,\nI’d call it [NAME], and you’re to blame.";
   var DEFAULTS = {
     trigger:"remind you of anyone", lock:"interesting", placeholder:"you", timeout:8,
     nameMode:false, maybeOn:true, flipOn:true, stopAfterLock:true, readSwitch:true, autoDelay:5, maybeFormat:"sentence", maybePrefix:"Maybe",
     maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"nice",
     liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
     maybeList:[{d:74,text:"Alina will think of Kate"},{d:80,text:"Maybe John"},{d:82,text:"Something like Cat or Kate"},{d:95,text:"Alex"}],
-    homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, poemTitle:"YOU", poemDays:0, poemTime:"20:18",
+    homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, poemTitle:"YOU", noteText:YOU_POEM, photoPos:"above", poemDays:0, poemTime:"20:18",
     homeNotes:[
       {title:"Maybe I could hold your hand Even...", preview:"say I am. More than night enough", days:0, time:"16:50"},
       {title:"Mercedes GT43 AMG", preview:"No additional text", days:2, time:"14:12"},
@@ -513,6 +563,51 @@
   function maybeActive(){ return !cfg.nameMode || cfg.maybeOn; }
   function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} if (typeof renderSummaries === "function") renderSummaries(); }
   function val(k){ var v = cfg[k]; return (typeof v === "string" && !v.trim()) ? DEFAULTS[k] : v; }
+  function noteTitle(){ return (cfg.poemTitle || "").trim(); }
+
+  /* ================= PHOTO STORAGE ================= */
+  var photoURL = null;
+  function idb(cb){
+    try {
+      var req = indexedDB.open("noted", 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore("files"); };
+      req.onsuccess = function(){ cb(req.result); };
+      req.onerror = function(){ cb(null); };
+    } catch(e){ cb(null); }
+  }
+  function savePhoto(blob, done){
+    idb(function(db){
+      if (!db) { done && done(false); return; }
+      var tx = db.transaction("files","readwrite");
+      if (blob) tx.objectStore("files").put(blob, "photo"); else tx.objectStore("files").delete("photo");
+      tx.oncomplete = function(){ done && done(true); }; tx.onerror = function(){ done && done(false); };
+    });
+  }
+  function loadPhoto(done){
+    idb(function(db){
+      if (!db) { done(); return; }
+      var r = db.transaction("files").objectStore("files").get("photo");
+      r.onsuccess = function(){ setPhotoBlob(r.result || null); done(); };
+      r.onerror = function(){ done(); };
+    });
+  }
+  function setPhotoBlob(blob){
+    if (photoURL) { URL.revokeObjectURL(photoURL); photoURL = null; }
+    if (blob) photoURL = URL.createObjectURL(blob);
+  }
+  // shrink big camera photos so they load fast and fit in storage
+  function shrinkImage(file, cb){
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      var max = 2048, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement("canvas"); c.width = Math.round(w*k); c.height = Math.round(h*k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function(b){ cb(b || file); }, "image/jpeg", 0.88);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); cb(file); };
+    img.src = url;
+  }
 
   /* ================= TIME ================= */
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -556,9 +651,14 @@
 
   /* ================= HOME RENDER ================= */
   var FOLDER = '<svg viewBox="0 0 16 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 2.2C1 1.5 1.5 1 2.2 1h3.4l1.5 1.6h6.7c.7 0 1.2.5 1.2 1.2v7c0 .7-.5 1.2-1.2 1.2H2.2C1.5 12 1 11.5 1 10.8z"/><path d="M1 4.3h14"/></svg>';
-  var POEM_PREVIEW = "There’s a voice I seem to know by heart,";
+  function notePreview(){
+    var lines = (cfg.noteText || "").split("\n").map(function(l){ return l.trim(); }).filter(Boolean);
+    if (!lines.length) return "No additional text";
+    return lines[0].replace(/\[name\]/gi, val("placeholder"));
+  }
   function noteRow(title, when, preview, isPoem){
     var r = el("div","row");
+    if (isPoem && photoURL) { r.className = "row has-thumb"; var th = el("img","thumb"); th.src = photoURL; th.alt = ""; r.appendChild(th); }
     r.appendChild(el("div","t",title));
     var s = el("div","s"); s.appendChild(el("b",null,when)); s.appendChild(document.createTextNode(preview)); r.appendChild(s);
     var f = el("div","f"); f.innerHTML = FOLDER; f.appendChild(document.createTextNode("Notes")); r.appendChild(f);
@@ -577,15 +677,48 @@
     items.forEach(function(it){
       var sec = sectionFor(it.days);
       if (sec !== lastSec) { wrap.appendChild(el("div","hsec",sec)); card = el("div","hcard"); wrap.appendChild(card); lastSec = sec; }
-      if (it.poem) card.appendChild(noteRow(val("poemTitle"), poemWhenText(), POEM_PREVIEW, true));
+      if (it.poem) card.appendChild(noteRow(noteTitle() || (photoURL && !(cfg.noteText||"").trim() ? "Photo" : "New Note"), poemWhenText(), notePreview(), true));
       else card.appendChild(noteRow(it.n.title||"", listWhen(it.n.days, it.n.time), it.n.preview||"No additional text", false));
     });
   }
 
   /* ================= POEM / MAYBE RENDER ================= */
-  var nameEl = $("name");
+  var nameEls = [], lastNameEl = null, readObserver = null;
+  function setNames(t){ nameEls.forEach(function(n){ n.textContent = t; }); }
+  function textBlock(text){
+    var frag = document.createDocumentFragment();
+    text.replace(/\r/g,"").split(/\n\s*\n/).forEach(function(stanza){
+      if (!stanza.trim()) return;
+      var p = el("p","stanza");
+      stanza.split("\n").forEach(function(line, li){
+        if (li) p.appendChild(document.createElement("br"));
+        line.split(/(\[name\])/i).forEach(function(part){
+          if (/^\[name\]$/i.test(part)) { var sp = el("span","nm"); nameEls.push(sp); p.appendChild(sp); }
+          else if (part) p.appendChild(document.createTextNode(part));
+        });
+      });
+      frag.appendChild(p);
+    });
+    return frag;
+  }
+  function renderNote(){
+    var box = $("noteContent"); box.innerHTML = ""; nameEls = [];
+    if (noteTitle()) box.appendChild(el("h1",null,noteTitle()));
+    var photo = null;
+    if (photoURL) { photo = el("div","notephoto"); var im = el("img"); im.src = photoURL; im.alt = ""; im.draggable = false; photo.appendChild(im); }
+    var text = (cfg.noteText || "").trim() ? textBlock(cfg.noteText) : null;
+    if (photo && cfg.photoPos !== "below") box.appendChild(photo);
+    if (text) box.appendChild(text);
+    if (photo && cfg.photoPos === "below") box.appendChild(photo);
+    var s1 = slot("them1");
+    setNames(s1 && s1.cand ? s1.cand : val("placeholder"));
+    // watch the last [NAME] so Name Mode knows when it has been read
+    lastNameEl = nameEls.length ? nameEls[nameEls.length-1] : null;
+    if (readObserver) readObserver.disconnect();
+    if (readObserver && lastNameEl) readObserver.observe(lastNameEl);
+  }
   function renderPoemStatic(){
-    $("p-title").textContent = val("poemTitle");
+    renderNote();
     var pd = poemDate();
     $("date").textContent = MONTHS[pd.getMonth()] + " " + pd.getDate() + ", " + pd.getFullYear() + " at " + fmtTime(pd);
     $("maybeWrap").style.display = maybeActive() ? "" : "none";
@@ -670,7 +803,7 @@
     }
     // their own name can be asked at any time, in any order, and is kept for the whole performance
     if (cfg.maybeFormat === "sentence") slots.push(mkSlot("me", val("meTrigger"), cfg.meLock));
-    nameEl.textContent = val("placeholder");
+    setNames(val("placeholder"));
     renderMaybe();
   }
 
@@ -703,7 +836,7 @@
   }
 
   function onCand(s){
-    if (s.key === "them1" && s.cand) nameEl.textContent = s.cand;
+    if (s.key === "them1" && s.cand) setNames(s.cand);
     if (phase === 2) renderMaybe();
   }
 
@@ -887,7 +1020,7 @@
 
   /* ================= "THEY READ THE LAST LINE" ================= */
   if ("IntersectionObserver" in window) {
-    new IntersectionObserver(function(entries){
+    readObserver = new IntersectionObserver(function(entries){
       entries.forEach(function(en){
         if (!en.isIntersecting || !poemOpen || phase !== 1 || readTimer) return;
         var g = gen;
@@ -899,7 +1032,7 @@
           else if (cfg.maybeOn && cfg.readSwitch) enterMaybe((cfg.autoDelay||0) * 1000);
         }, 2500);
       });
-    }, {threshold: 1}).observe(nameEl);
+    }, {threshold: 1});
   }
 
   /* ================= NAVIGATION ================= */
@@ -1023,7 +1156,9 @@
 
   /* --- previews / dependent bits --- */
   function renderPreviews(){
-    $("pv-last").textContent = "I’d call it " + val("placeholder") + ", and you’re to blame.";
+    var nl = (cfg.noteText || "").split("\n").filter(function(l){ return /\[name\]/i.test(l); });
+    $("pv-last").textContent = nl.length ? nl[nl.length-1].trim().replace(/\[name\]/gi, val("placeholder")) : "(no [NAME] in the text)";
+    $("nameWarn").style.display = (cfg.nameMode && !nl.length) ? "" : "none";
     document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock"); });
     document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = cfg.meLock || "nice"; });
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
@@ -1135,7 +1270,7 @@
       var it = el("div","ed-item" + (item.poem ? " poem" : "")), f = el("div","ed-f");
       var line = el("div","ed-line");
       if (item.poem) {
-        var lab = el("div"); lab.appendChild(el("b",null,"📝 " + val("poemTitle"))); lab.appendChild(el("small",null," the poem note"));
+        var lab = el("div"); lab.appendChild(el("b",null,"📝 " + (noteTitle() || "Trick note"))); lab.appendChild(el("small",null," the trick note"));
         f.appendChild(lab);
         line.appendChild(smallStepper(dayLabel(cfg.poemDays),
           function(){ cfg.poemDays = Math.min(730, cfg.poemDays + 1); saveCfg(); renderSettingsLists(); },
@@ -1175,6 +1310,28 @@
   var TEXT = ["trigger","lock","placeholder","maybeTemplate","meTrigger","meLock","maybePrefix","maybeHeading","homeTitle","homeCount","poemTitle"];
   TEXT.forEach(function(k){ bindText("f-"+k, k, renderPreviews); });
   bindText("f-poemTitle", "poemTitle", renderNotesEd);
+  bindText("f-noteText", "noteText", renderPreviews);
+  $("resetPoem").addEventListener("click", function(){ cfg.noteText = YOU_POEM; if (!noteTitle()) cfg.poemTitle = "YOU"; saveCfg(); renderSettings(); });
+  $("photoPosSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.photoPos = b.dataset.v; setSeg("photoPosSeg", cfg.photoPos); saveCfg(); });
+  $("photoInput").addEventListener("change", function(){
+    var f = $("photoInput").files[0]; if (!f) return;
+    shrinkImage(f, function(blob){
+      savePhoto(blob, function(ok){
+        if (!ok) { alertNote("Couldn't save the photo on this phone."); return; }
+        setPhotoBlob(blob); renderPhotoPick(); renderSummaries();
+      });
+    });
+    $("photoInput").value = "";
+  });
+  $("photoRemove").addEventListener("click", function(){ savePhoto(null, function(){ setPhotoBlob(null); renderPhotoPick(); renderSummaries(); }); });
+  function alertNote(t){ $("pv-last").textContent = t; }
+  function renderPhotoPick(){
+    var th = $("photoThumb"); th.innerHTML = "";
+    if (photoURL) { var im = el("img"); im.src = photoURL; im.alt = ""; th.appendChild(im); }
+    else th.appendChild(el("span","ph-empty","No photo"));
+    $("photoRemove").style.display = photoURL ? "" : "none";
+    $("photoPosWrap").style.display = photoURL && (cfg.noteText||"").trim() ? "" : "none";
+  }
   ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
   $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
   $("startSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.startMode = b.dataset.v; setSeg("startSeg", cfg.startMode); saveCfg(); renderPreviews(); });
@@ -1196,6 +1353,9 @@
 
   function renderSettings(){
     TEXT.forEach(function(k){ $("f-"+k).value = cfg[k] || ""; });
+    $("f-noteText").value = cfg.noteText || "";
+    setSeg("photoPosSeg", cfg.photoPos);
+    renderPhotoPick();
     ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
     setSeg("fmtSeg", cfg.maybeFormat);
@@ -1215,6 +1375,8 @@
   function q(s){ return "“" + s + "”"; }
   function renderSummaries(){
     if (!$("sum-listen")) return;
+    var hasText = !!(cfg.noteText||"").trim();
+    $("sum-note").textContent = (noteTitle() ? q(noteTitle()) + " · " : "") + (hasText && photoURL ? "text + photo" : photoURL ? "photo" : hasText ? "text" : "empty") + (hasText && !/\[name\]/i.test(cfg.noteText) ? " · no [NAME]" : "");
     $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger")) + " → " + q(val("lock"));
     $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + " · " + cfg.maybeList.length + " other entr" + (cfg.maybeList.length === 1 ? "y" : "ies") + " · prediction " + entryDate() + (cfg.liveDaysBefore < 0 ? " (future)" : "");
     $("sum-name").textContent = cfg.nameMode ? "On · name goes in the poem" : "Off · name goes in the list";
@@ -1243,6 +1405,7 @@
   resetState();
   renderHome();
   log();
+  loadPhoto(function(){ renderHome(); });
 })();
 </script>
 </body>
