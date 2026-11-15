@@ -317,7 +317,7 @@
           <label class="fld"><span>Trigger phrase</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <label class="fld"><span>Lock word</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <p class="note"><b>Tip:</b> The trigger only has to be part of what you say. “Does this <b>remind you of anyone</b>?” works with the default.</p>
-          <div class="mode"><span><b>Mic off after “<span class="lk-word">interesting</span>”</b><small>If you still need their name, double-tap to turn it back on, then ask.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
+          <div class="mode"><span><b>Mic off after each name</b><small>Turns off after “<span class="lk-word">interesting</span>” and after “<span class="mlk-word">nice</span>”. Double-tap or turn face down to listen for the other name.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
         </div>
         <div class="subsec mode-card" id="autoCard">
           <div class="mc-head"><h4>Auto-Lock</h4><label class="pill"><input type="checkbox" id="autoOn"><span></span></label></div>
@@ -454,7 +454,7 @@
     <ol class="steps">
       <li><b>Open the poem.</b> Tap the poem note, then <b>double-tap</b> anywhere on the poem to start listening (the orange dot appears at the top). Hand them the phone: “This is a poem I wrote for a friend. Read it out loud.”</li>
       <li><b>Halfway, stop them.</b> Ask: <span class="say">“Does this remind you of anyone?”</span> Then: “Who?” They say a name, and you say <span class="say" id="g-lock">“Interesting.”</span> The mic turns off.</li>
-      <li><b>Get their name, any time.</b> In Sentence format, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Before, during, or after the poem, in either order. If the mic is already off, double-tap first.</li>
+      <li><b>Get their name, any time.</b> In Sentence format, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Before, during, or after the poem, in either order. The mic turns off after each name, so double-tap (or turn the phone face down) before asking for the other one.</li>
       <li><b>They finish the poem.</b> It ends with “you”.</li>
       <li><b>Show the list.</b> Scroll down past the poem to the list. The newest entry has the name.</li>
     </ol>
@@ -710,15 +710,15 @@
   function lockSlot(s){
     if (s.status === "locked") return;
     s.status = "locked"; clearTimeout(s.timer); onCand(s);
-    if (s.key === "me") {
-      if (phase === 2) checkDone();
-    } else if (s.key === "them1") {
+    if (s.key === "them1") {
       if (!s.cand && cfg.maybeOn) { enterMaybe(); return; }
       phase = cfg.maybeOn ? 1.5 : 3;
       stopMic(); armed = false;
-    } else if (s.key === "them2") {
-      // the lock word turns the mic off; a double-tap brings it back if their name is still needed
-      if (!checkDone() && cfg.stopAfterLock) { stopMic(); armed = false; }
+    } else if (phase === 2 && checkDone()) {
+      // both names are in: checkDone turned the mic off
+    } else if (cfg.stopAfterLock) {
+      // one name is in: mic off until a double-tap or face-down turns it back on
+      stopMic(); armed = false;
     }
     log();
   }
@@ -758,13 +758,14 @@
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var rec = null, running = false, wanted = false, history = "", sessionFinal = "", lastInterim = "";
 
+  // Each recognizer ignores events once it has been replaced, so an old one can't switch things back on.
   function build(){
-    rec = new SR();
-    rec.lang = cfg.lang; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
-    rec.onstart = function(){ micOK(); if (testing) setTimeout(function(){ try { rec.stop(); } catch(e){} }, 400); };
-    rec.onaudiostart = function(){ micOK(); };
-    rec.onresult = function(e){
-      if (testing) return;
+    var r = new SR();
+    r.lang = cfg.lang; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
+    r.onstart = function(){ if (r !== rec) return; micOK(); if (testing) setTimeout(function(){ hardStop(); }, 400); };
+    r.onaudiostart = function(){ if (r !== rec) return; micOK(); };
+    r.onresult = function(e){
+      if (r !== rec || testing || !wanted) return;
       var fin = "", inter = "";
       for (var i=0;i<e.results.length;i++){
         var t = e.results[i][0].transcript;
@@ -774,27 +775,49 @@
       cur = clean(history + sessionFinal + lastInterim);
       process();
     };
-    rec.onend = function(){
+    r.onend = function(){
+      if (r !== rec) return;
       running = false;
-      if (testing) { testing = false; sessionFinal = ""; lastInterim = ""; return; }
       history += sessionFinal + lastInterim; sessionFinal = ""; lastInterim = "";
+      if (testing) { testing = false; return; }
       if (wanted && needsMic()) setTimeout(startMic, 200);
       log();
     };
-    rec.onerror = function(e){
+    r.onerror = function(e){
+      if (r !== rec) return;
       dbg.err = e.error; log();
       if (e.error === "not-allowed" || e.error === "service-not-allowed") { wanted = false; micBad(); }
     };
+    rec = r;
   }
   function startMic(){
     if (!SR || !needsMic()) return;
     wanted = true;
-    if (!rec) build();
     if (running) return;
-    try { rec.start(); running = true; } catch(e){}
+    if (!rec) build();
+    try { rec.start(); running = true; }
+    catch(e){
+      // the old one hasn't finished shutting down: replace it with a fresh one
+      dropRec(); build();
+      try { rec.start(); running = true; } catch(e2){}
+    }
     log();
   }
-  function stopMic(){ wanted = false; try { rec && rec.stop(); } catch(e){} }
+  function dropRec(){
+    if (!rec) return;
+    var r = rec; rec = null; running = false;
+    history += sessionFinal + lastInterim; sessionFinal = ""; lastInterim = "";
+    try { r.abort(); } catch(e){}
+  }
+  // Turn the mic all the way off (abort is more reliable than stop on iPhone)
+  function hardStop(){
+    if (!rec) { running = false; return; }
+    var r = rec;
+    try { r.abort(); } catch(e){ try { r.stop(); } catch(e2){} }
+    // if it still hasn't ended shortly after, throw it away so the mic is released
+    setTimeout(function(){ if (rec === r && running && !wanted) { dropRec(); log(); } }, 700);
+  }
+  function stopMic(){ wanted = false; hardStop(); log(); }
 
   /* ================= PERMISSIONS ================= */
   var testing = false, micGranted = false, micDenied = false, motionGranted = false, motionListening = false;
@@ -802,8 +825,7 @@
   function micBad(){ testing = false; micDenied = true; renderPerms(); }
   function allowMic(){
     if (!SR) { micDenied = true; renderPerms(); return; }
-    stopMic();
-    if (!rec) build();
+    stopMic(); dropRec(); build();
     testing = true;
     try { rec.start(); running = true; } catch(e){ testing = false; }
   }
@@ -858,8 +880,9 @@
   }
   function onFlip(){
     if (!poemOpen || !maybeActive() || !cfg.flipOn) return;
-    if (phase === 1 || phase === 1.5) enterMaybe();
-    else if (phase === 2 && !running) { clearTimeout(delayTimer); armed = true; startMic(); }   // skip the wait
+    if (phase === 1 && !running) { armed = true; startMic(); }          // resume (a name is still missing)
+    else if (phase === 1 || phase === 1.5) enterMaybe();                 // Name Mode: switch to the list backup
+    else if (phase === 2 && !running) { clearTimeout(delayTimer); armed = true; startMic(); }
   }
 
   /* ================= "THEY READ THE LAST LINE" ================= */
@@ -1002,6 +1025,7 @@
   function renderPreviews(){
     $("pv-last").textContent = "I’d call it " + val("placeholder") + ", and you’re to blame.";
     document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock"); });
+    document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = cfg.meLock || "nice"; });
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
     $("pv-entry").textContent = entryDate() + " - " + entryText("Kate", "Alina");
     $("startNote").innerHTML = cfg.startMode === "tap"
