@@ -96,7 +96,6 @@
   .gap{height:62vh}
   .maybe{font-size:17px;line-height:1.5}
   .maybe .hd{margin-bottom:6px}
-  #live{display:none}
 
   /* ---------- Settings + Instructions (OneLock look) ---------- */
   #settings,#guide{display:none;position:fixed;inset:0;z-index:10;background:#1f2023;color:#f2f2f4;flex-direction:column;
@@ -179,6 +178,21 @@
   .ed-item.one .ed-ctl,.ed-item.sec .ed-ctl{flex-direction:row}
   .ed-ctl button:disabled{opacity:.3}
   .empty-note{color:#8e9096;font-size:15px}
+  .group{background:#2a2b2f;border-radius:18px;margin-bottom:12px;overflow:hidden}
+  .group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:none;border:0;color:inherit;
+    font:inherit;text-align:left;padding:16px 18px;cursor:pointer}
+  .group-head:active{background:#303236}
+  .group-head > span:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .group-head b{font-size:19px;font-weight:600}
+  .group-head small{font-size:14px;color:#a7a8ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .group-head .chev{transition:transform .2s}
+  .group.open .group-head .chev{transform:rotate(90deg)}
+  .group-body{display:none;padding:0 18px 18px}
+  .group.open .group-body{display:block}
+  .subsec{border-top:.5px solid #3a3c40;margin-top:16px;padding-top:16px}
+  .group-body > .subsec:first-child,.group-body > .mode-card:first-child{border-top:0;margin-top:0;padding-top:0}
+  .subsec h4{margin:0 0 10px;font-size:17px;font-weight:600}
+  .subsec .mc-head h4{margin:0}
   .stepper output.wide{min-width:104px;font-size:17px}
   .stepper.sm{gap:4px}
   .stepper.sm button{width:34px;height:34px;font-size:20px}
@@ -263,7 +277,6 @@
       <div class="gap"></div>
       <div class="maybe">
         <div class="hd" id="m-head"></div>
-        <div id="live"></div>
         <div id="m-list"></div>
       </div>
     </div>
@@ -279,157 +292,143 @@
 
     <button class="card link-card" id="openGuide"><span><b>Instructions</b><small>How to set up and perform it</small></span><span class="chev">›</span></button>
 
-    <!-- ===== BEFORE YOU PERFORM ===== -->
-    <div class="sec-label">Before You Perform</div>
-
+    <!-- ===== PERMISSIONS (always open) ===== -->
     <div class="card">
       <h3>Permissions</h3>
-      <p class="sub">Allow these here, so no pop-up appears when you open the poem or start listening.</p>
+      <p class="sub">Allow these before you perform, so no pop-up appears in front of anyone.</p>
       <div class="mode"><span><b>Microphone</b><small id="micStatus">Not allowed yet</small></span><span id="micSlot"><button class="gbtn blue" id="allowMic">Allow</button></span></div>
-      <div class="mode" id="motionRow"><span><b>Motion</b><small id="motionStatus">For face-down restart</small></span><span id="motionSlot"><button class="gbtn blue" id="allowMotion">Allow</button></span></div>
-      <p class="note"><b>Tip:</b> These stay allowed while Noted is open or in the background. If you fully close Noted (swipe it away), or iPhone closes it to free memory, tap Allow here again before you perform.</p>
+      <div class="mode" id="motionRow"><span><b>Motion</b><small id="motionStatus">For face-down start</small></span><span id="motionSlot"><button class="gbtn blue" id="allowMotion">Allow</button></span></div>
+      <p class="note">If you fully close Noted (swipe it away), tap Allow again.</p>
     </div>
 
-    <!-- ===== THE TRICK ===== -->
-    <div class="sec-label">The Trick</div>
-    <p class="sub" style="margin:-4px 4px 14px">The poem stays as written. The name they think of goes into the list hidden far below the poem.</p>
-
-    <div class="card">
-      <h3>Start Listening</h3>
-      <p class="sub">When the mic turns on in the poem note.</p>
-      <div class="seg" id="startSeg"><button data-v="tap">Double-tap the note</button><button data-v="open">When it opens</button></div>
-      <p class="note" id="startNote"></p>
-    </div>
-
-    <div class="card">
-      <h3>Listening Phrases</h3>
-      <p class="sub">Say the trigger and it starts listening for a first name. Say the lock word after they answer and the name is set.</p>
-      <label class="fld"><span>Trigger phrase</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <label class="fld"><span>Lock word</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <p class="note"><b>Tip:</b> The trigger only has to be part of what you say. “Does this <b>remind you of anyone</b>?” works with the default.</p>
-    </div>
-
-    <div class="card">
-      <h3>Face-Down Start</h3>
-      <div class="mode" style="margin-top:8px"><span><b>Turn face down to listen</b><small>Another way to start the mic besides the double-tap. In Name Mode it starts the Maybe backup.</small></span><label class="pill"><input type="checkbox" id="f-flipOn"><span></span></label></div>
-    </div>
-
-    <div class="card mode-card" id="autoCard">
-      <div class="mc-head"><h3>Auto-Lock</h3><label class="pill"><input type="checkbox" id="autoOn"><span></span></label></div>
-      <p class="sub" style="margin:10px 0 0">Sets the name by itself if you forget to say the lock word.</p>
-      <div class="mc-body">
-        <div class="mode"><b>Seconds after a name</b>
-          <div class="stepper"><button id="toMinus" aria-label="Less">−</button><output id="toVal">8</output><button id="toPlus" aria-label="More">+</button></div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Last Line Word</h3>
-      <p class="sub">The word the last line ends with. In Name Mode, the name replaces it.</p>
-      <input class="inp" id="f-placeholder" autocomplete="off">
-      <div class="preview"><small>Last line</small><span id="pv-last"></span></div>
-    </div>
-
-    <div class="card">
-      <h3>Rehearsal Mode</h3>
-      <div class="mode" style="margin-top:8px"><span><b>Show what it hears</b><small>A small box at the top shows each step. Turn it off before you perform.</small></span><label class="pill"><input type="checkbox" id="f-debug"><span></span></label></div>
-    </div>
-
-    <!-- ===== MAYBE LIST ===== -->
-    <div class="sec-label">The Maybe List</div>
-
-    <div class="card" id="fmtCard">
-      <h3>Entry Format</h3>
-      <p class="sub">How the new entry at the top of the list reads.</p>
-      <div class="seg" id="fmtSeg"><button data-v="sentence">Sentence</button><button data-v="name">Name only</button></div>
-      <div id="fmtSentence">
-        <label class="fld"><span>Sentence ({me} = their name, {them} = the person)</span><input class="inp" id="f-maybeTemplate" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <label class="fld"><span>Trigger for their name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <p class="note"><b>Tip:</b> If their own name is missed, the entry falls back to the Name only style.</p>
-      </div>
-      <div id="fmtName">
-        <label class="fld"><span>Word before the name (leave blank for none)</span><input class="inp" id="f-maybePrefix" autocomplete="off"></label>
-      </div>
-      <div class="preview"><small>New entry</small><span id="pv-entry"></span></div>
-    </div>
-
-    <div class="card">
-      <div class="mc-head"><h3>Entry Date</h3>
-        <div class="stepper"><button id="daMinus" aria-label="Fewer">−</button><output id="daVal">0</output><button id="daPlus" aria-label="More">+</button></div></div>
-      <p class="sub" style="margin:10px 0 0" id="daNote"></p>
-    </div>
-
-    <div class="card">
-      <h3>The List</h3>
-      <p class="sub">Older entries. Each date is counted back from the poem note's date, so they all move when the poem's date moves. They sort newest first by themselves.</p>
-      <label class="fld"><span>Heading</span><input class="inp" id="f-maybeHeading" autocomplete="off"></label>
-      <div class="ed" id="maybeEd"></div>
-      <div class="btn-row"><button class="gbtn blue" id="addEntry">+ Add entry</button></div>
-    </div>
-
-    <!-- ===== NAME MODE ===== -->
-    <div class="sec-label">Name Mode</div>
-
-    <div class="card mode-card" id="nameCard">
-      <div class="mc-head"><h3>Name Mode</h3><label class="pill"><input type="checkbox" id="f-nameMode"><span></span></label></div>
-      <p class="sub" style="margin:10px 0 0">Puts the name right into the last line of the poem instead. The Maybe list becomes the backup if the name is missed.</p>
-      <div class="mc-body">
-        <div class="mode"><span><b>Maybe backup</b><small>If the name is missed, listen again and put it in the list</small></span><label class="pill"><input type="checkbox" id="f-maybeOn"><span></span></label></div>
-        <div id="backupRows">
-        <div class="mode"><span><b>Automatic restart</b><small>If they read “<span class="ph-word">you</span>”, start listening again by itself</small></span><label class="pill"><input type="checkbox" id="f-readSwitch"><span></span></label></div>
-        <div class="mode" id="adRow"><span><b>Wait before listening</b><small>Seconds after they finish, so they don't see the orange dot come on</small></span>
-          <div class="stepper"><button id="adMinus" aria-label="Less">−</button><output id="adVal">5</output><button id="adPlus" aria-label="More">+</button></div></div>
+    <!-- ===== LISTENING ===== -->
+    <div class="group" id="g-listen">
+      <button class="group-head"><span><b>Listening</b><small id="sum-listen"></small></span><span class="chev">›</span></button>
+      <div class="group-body">
+        <div class="subsec">
+          <h4>Start Listening</h4>
+          <div class="seg" id="startSeg"><button data-v="tap">Double-tap the poem</button><button data-v="open">When it opens</button></div>
+          <p class="note" id="startNote"></p>
+          <div class="mode"><span><b>Face down also starts it</b><small>Turn the phone face down to start the mic</small></span><label class="pill"><input type="checkbox" id="f-flipOn"><span></span></label></div>
+        </div>
+        <div class="subsec">
+          <h4>Phrases</h4>
+          <p class="sub">Say the trigger and it listens for a first name. Say the lock word after they answer.</p>
+          <label class="fld"><span>Trigger phrase</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="fld"><span>Lock word</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <p class="note"><b>Tip:</b> The trigger only has to be part of what you say. “Does this <b>remind you of anyone</b>?” works with the default.</p>
+          <div class="mode"><span><b>Mic off after “<span class="lk-word">interesting</span>”</b><small>If you still need their name, double-tap to turn it back on, then ask.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
+        </div>
+        <div class="subsec mode-card" id="autoCard">
+          <div class="mc-head"><h4>Auto-Lock</h4><label class="pill"><input type="checkbox" id="autoOn"><span></span></label></div>
+          <p class="sub" style="margin:6px 0 0">Sets the name by itself if you forget the lock word.</p>
+          <div class="mc-body">
+            <div class="mode"><b>Seconds after a name</b>
+              <div class="stepper"><button id="toMinus" aria-label="Less">−</button><output id="toVal">8</output><button id="toPlus" aria-label="More">+</button></div></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ===== NOTES HOME SCREEN ===== -->
-    <div class="sec-label">Notes Home Screen</div>
-
-    <div class="card">
-      <h3>Header</h3>
-      <label class="fld"><span>Title</span><input class="inp" id="f-homeTitle" autocomplete="off"></label>
-      <label class="fld"><span>Count line</span><input class="inp" id="f-homeCount" autocomplete="off"></label>
-      <div class="mode"><b>“Pinned” row</b><label class="pill"><input type="checkbox" id="f-showPinned"><span></span></label></div>
+    <!-- ===== PREDICTION LIST ===== -->
+    <div class="group" id="g-list">
+      <button class="group-head"><span><b>Prediction List</b><small id="sum-list"></small></span><span class="chev">›</span></button>
+      <div class="group-body">
+        <p class="sub" style="margin:2px 0 0">The list hidden far below the poem. The name they think of is added to the top.</p>
+        <div class="preview"><small>New entry</small><span id="pv-entry"></span></div>
+        <div class="subsec">
+          <h4>Entry Style</h4>
+          <div class="seg" id="fmtSeg"><button data-v="sentence">Sentence</button><button data-v="name">Name only</button></div>
+          <div id="fmtSentence">
+            <label class="fld"><span>Sentence ({me} = their name, {them} = the person)</span><input class="inp" id="f-maybeTemplate" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+            <label class="fld"><span>Trigger for their name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+            <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+            <p class="note">Ask their name any time: before, during, or after the poem. It always goes first in the sentence. If their name is missed, the entry uses the Name only style.</p>
+          </div>
+          <div id="fmtName">
+            <label class="fld"><span>Word before the name (blank = none)</span><input class="inp" id="f-maybePrefix" autocomplete="off"></label>
+          </div>
+        </div>
+        <div class="subsec">
+          <h4>Entries</h4>
+          <p class="sub">The list sorts by date, newest first. The blue row is where the prediction lands: change its date to put it anywhere in the list, or after the poem's date to make it a prediction for the future. All dates move with the poem note's date.</p>
+          <label class="fld"><span>List heading</span><input class="inp" id="f-maybeHeading" autocomplete="off"></label>
+          <div class="ed" id="maybeEd"></div>
+          <div class="btn-row"><button class="gbtn blue" id="addEntry">+ Add entry</button></div>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Poem Note</h3>
-      <label class="fld"><span>Title</span><input class="inp" id="f-poemTitle" autocomplete="off"></label>
-      <div class="mode"><b>Day</b>
-        <div class="stepper"><button id="pdMinus" aria-label="Later">−</button><output id="pdVal" class="wide">Today</output><button id="pdPlus" aria-label="Earlier">+</button></div></div>
-      <div class="mode"><b>Time</b><input class="inp time" id="f-poemTime" type="time"></div>
-      <p class="note" id="pdNote"></p>
+    <!-- ===== NAME MODE ===== -->
+    <div class="group" id="g-name">
+      <button class="group-head"><span><b>Name Mode</b><small id="sum-name"></small></span><span class="chev">›</span></button>
+      <div class="group-body">
+        <div class="mode-card" id="nameCard">
+          <div class="mode" style="margin-top:0"><span><b>Name Mode</b><small>Puts the name into the poem's last line instead of the list</small></span><label class="pill"><input type="checkbox" id="f-nameMode"><span></span></label></div>
+          <div class="mc-body">
+            <div class="mode"><span><b>List as backup</b><small>If the name is missed, listen again and add it to the list</small></span><label class="pill"><input type="checkbox" id="f-maybeOn"><span></span></label></div>
+            <div id="backupRows">
+              <div class="mode"><span><b>Automatic restart</b><small>If they read “<span class="ph-word">you</span>”, listen again by itself</small></span><label class="pill"><input type="checkbox" id="f-readSwitch"><span></span></label></div>
+              <div class="mode" id="adRow"><span><b>Wait first</b><small>Seconds before the mic turns on, so they don't see the orange dot</small></span>
+                <div class="stepper"><button id="adMinus" aria-label="Less">−</button><output id="adVal">5</output><button id="adPlus" aria-label="More">+</button></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Notes List</h3>
-      <p class="sub">Sorted by date, newest first, with the Today, Yesterday and Previous 7 Days sections made for you, just like Notes. Change a note's day or time to move it. The blue one is the poem note.</p>
-      <div class="ed" id="notesEd"></div>
-      <div class="btn-row"><button class="gbtn blue" id="addNote">+ Note</button></div>
+    <!-- ===== NOTES LOOK ===== -->
+    <div class="group" id="g-look">
+      <button class="group-head"><span><b>Notes Look</b><small id="sum-look"></small></span><span class="chev">›</span></button>
+      <div class="group-body">
+        <div class="subsec">
+          <h4>Notes List Header</h4>
+          <label class="fld"><span>Title</span><input class="inp" id="f-homeTitle" autocomplete="off"></label>
+          <label class="fld"><span>Count line</span><input class="inp" id="f-homeCount" autocomplete="off"></label>
+          <div class="mode"><b>“Pinned” row</b><label class="pill"><input type="checkbox" id="f-showPinned"><span></span></label></div>
+        </div>
+        <div class="subsec">
+          <h4>Poem Note</h4>
+          <label class="fld"><span>Title</span><input class="inp" id="f-poemTitle" autocomplete="off"></label>
+          <div class="mode"><b>Day</b>
+            <div class="stepper"><button id="pdMinus" aria-label="Earlier">−</button><output id="pdVal" class="wide">Today</output><button id="pdPlus" aria-label="Later">+</button></div></div>
+          <div class="mode"><b>Time</b><input class="inp time" id="f-poemTime" type="time"></div>
+          <p class="note" id="pdNote"></p>
+          <label class="fld"><span>Last word of the poem</span><input class="inp" id="f-placeholder" autocomplete="off"></label>
+          <div class="preview"><small>Last line</small><span id="pv-last"></span></div>
+        </div>
+        <div class="subsec">
+          <h4>Other Notes</h4>
+          <p class="sub">Sorted by date with sections made for you, like Notes. Change a day or time to move a note. Blue is the poem note.</p>
+          <div class="ed" id="notesEd"></div>
+          <div class="btn-row"><button class="gbtn blue" id="addNote">+ Note</button></div>
+        </div>
+      </div>
     </div>
 
     <!-- ===== OTHER ===== -->
-    <div class="sec-label">Other</div>
-
-    <div class="card">
-      <h3>Language</h3>
-      <p class="sub">The language the spectator speaks.</p>
-      <select class="inp" id="f-lang">
-        <option value="en-US">English (US)</option><option value="en-GB">English (UK)</option>
-        <option value="en-AU">English (Australia)</option><option value="en-CA">English (Canada)</option>
-        <option value="en-IN">English (India)</option><option value="es-ES">Español (España)</option>
-        <option value="es-MX">Español (México)</option><option value="fr-FR">Français</option>
-        <option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="pt-BR">Português (Brasil)</option>
-      </select>
+    <div class="group" id="g-other">
+      <button class="group-head"><span><b>Other</b><small id="sum-other"></small></span><span class="chev">›</span></button>
+      <div class="group-body">
+        <div class="subsec">
+          <div class="mode" style="margin-top:0"><span><b>Rehearsal Mode</b><small>Shows what it hears at the top. Turn off before you perform.</small></span><label class="pill"><input type="checkbox" id="f-debug"><span></span></label></div>
+        </div>
+        <div class="subsec">
+          <h4>Language</h4>
+          <select class="inp" id="f-lang">
+            <option value="en-US">English (US)</option><option value="en-GB">English (UK)</option>
+            <option value="en-AU">English (Australia)</option><option value="en-CA">English (Canada)</option>
+            <option value="en-IN">English (India)</option><option value="es-ES">Español (España)</option>
+            <option value="es-MX">Español (México)</option><option value="fr-FR">Français</option>
+            <option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="pt-BR">Português (Brasil)</option>
+          </select>
+        </div>
+        <div class="subsec">
+          <button class="gbtn red" id="resetAll">Reset all settings</button>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Reset</h3>
-      <p class="sub">Put every setting back to how it started.</p>
-      <button class="gbtn red" id="resetAll">Reset all settings</button>
-    </div>
   </div>
 </div>
 
@@ -454,8 +453,8 @@
     <p class="lead">The poem stays as written. The name goes into the list hidden below it.</p>
     <ol class="steps">
       <li><b>Open the poem.</b> Tap the poem note, then <b>double-tap</b> anywhere on the poem to start listening (the orange dot appears at the top). Hand them the phone: “This is a poem I wrote for a friend. Read it out loud.”</li>
-      <li><b>Get their name.</b> In Sentence format, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. You can do this before they start reading.</li>
-      <li><b>Halfway, stop them.</b> Ask: <span class="say">“Does this remind you of anyone?”</span> Then: “Who?” They say a name, and you say <span class="say" id="g-lock">“Interesting.”</span></li>
+      <li><b>Halfway, stop them.</b> Ask: <span class="say">“Does this remind you of anyone?”</span> Then: “Who?” They say a name, and you say <span class="say" id="g-lock">“Interesting.”</span> The mic turns off.</li>
+      <li><b>Get their name, any time.</b> In Sentence format, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Before, during, or after the poem, in either order. If the mic is already off, double-tap first.</li>
       <li><b>They finish the poem.</b> It ends with “you”.</li>
       <li><b>Show the list.</b> Scroll down past the poem to the list. The newest entry has the name.</li>
     </ol>
@@ -466,16 +465,16 @@
       <li><b>Same start.</b> Open the poem, double-tap, hand it over.</li>
       <li><b>Halfway, stop them.</b> Ask who it reminds them of. They say a name and you say “Interesting.” The name goes into the last line, which is still below the screen.</li>
       <li><b>They keep reading.</b> They scroll down, and the last line has the name.</li>
-      <li><b>If it misses</b> and they read “you”, the Maybe backup takes over. Turn the phone face down (or let Automatic restart start it), ask again, then show the list.</li>
+      <li><b>If it misses</b> and they read “you”, the list backup takes over. Turn the phone face down (or let Automatic restart start it), ask again, then show the list.</li>
     </ol>
     <p class="note"><b>Tip:</b> In Name Mode, ask before they reach the last stanza. Once the last line has been on screen for about 2 seconds, it stops waiting.</p>
 
     <h2 class="part">Controls</h2>
     <table class="ctrl">
       <tr><td>Tap •••</td><td>Settings</td></tr>
-      <tr><td>Double-tap the poem</td><td>Start listening (in Name Mode, after the reveal: Maybe backup)</td></tr>
+      <tr><td>Double-tap the poem</td><td>Start listening (in Name Mode, after the reveal: list backup)</td></tr>
       <tr><td>Back button on poem</td><td>Reset for the next person</td></tr>
-      <tr><td>Phone face down</td><td>Start listening (in Name Mode: Maybe backup)</td></tr>
+      <tr><td>Phone face down</td><td>Start listening (in Name Mode: list backup)</td></tr>
     </table>
     <p class="note"><b>Note:</b> The iPhone shows a small orange dot while the mic is on, and no web app can hide it. The mic only runs after your double-tap, and stops as soon as the name is set.</p>
   </div>
@@ -489,7 +488,7 @@
   /* ================= SETTINGS DATA ================= */
   var DEFAULTS = {
     trigger:"remind you of anyone", lock:"interesting", placeholder:"you", timeout:8,
-    nameMode:false, maybeOn:true, flipOn:true, readSwitch:true, autoDelay:5, maybeFormat:"sentence", maybePrefix:"Maybe",
+    nameMode:false, maybeOn:true, flipOn:true, stopAfterLock:true, readSwitch:true, autoDelay:5, maybeFormat:"sentence", maybePrefix:"Maybe",
     maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"nice",
     liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
     maybeList:[{d:74,text:"Alina will think of Kate"},{d:80,text:"Maybe John"},{d:82,text:"Something like Cat or Kate"},{d:95,text:"Alex"}],
@@ -512,7 +511,7 @@
   if (!Array.isArray(cfg.maybeList)) cfg.maybeList = clone(DEFAULTS.maybeList);
   if (!/^\d{1,2}:\d{2}$/.test(cfg.poemTime||"")) cfg.poemTime = DEFAULTS.poemTime;
   function maybeActive(){ return !cfg.nameMode || cfg.maybeOn; }
-  function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} }
+  function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} if (typeof renderSummaries === "function") renderSummaries(); }
   function val(k){ var v = cfg[k]; return (typeof v === "string" && !v.trim()) ? DEFAULTS[k] : v; }
 
   /* ================= TIME ================= */
@@ -591,8 +590,7 @@
     $("date").textContent = MONTHS[pd.getMonth()] + " " + pd.getDate() + ", " + pd.getFullYear() + " at " + fmtTime(pd);
     $("maybeWrap").style.display = maybeActive() ? "" : "none";
     $("m-head").textContent = cfg.maybeHeading;
-    var list = $("m-list"); list.innerHTML = "";
-    sortedMaybe().forEach(function(e){ if (e.text && e.text.trim()) list.appendChild(el("div",null, mmdd(maybeDate(e.d)) + " - " + e.text.trim())); });
+    renderMaybe();
   }
   function sortedMaybe(){ return cfg.maybeList.slice().sort(function(a,b){ return (a.d||0) - (b.d||0); }); }
   function entryText(them, me){
@@ -600,21 +598,31 @@
     var p = (cfg.maybePrefix||"").trim();
     return (p ? p + " " : "") + them;
   }
-  function renderMaybe(){
-    var live = $("live");
-    var them = slotVal("them2"), me = slotVal("me2");
-    if (!them) { live.style.display = "none"; return; }
-    live.textContent = entryDate() + " - " + entryText(them, me);
-    live.style.display = "block";
+  // all entries, plus the live prediction when there is one, sorted newest date first
+  function listRows(withLive){
+    var rows = cfg.maybeList.map(function(e){ return {d:e.d||0, e:e}; });
+    if (withLive) rows.push({d:cfg.liveDaysBefore||0, live:true});
+    rows.sort(function(a,b){ return a.d - b.d || (a.live ? -1 : b.live ? 1 : 0); });
+    return rows;
   }
+  function renderMaybe(){
+    var list = $("m-list"); if (!list) return;
+    var them = slotVal("them2"), me = slotVal("me");
+    list.innerHTML = "";
+    listRows(!!them).forEach(function(r){
+      if (r.live) { var lv = el("div",null, entryDate() + " - " + entryText(them, me)); lv.id = "live"; list.appendChild(lv); }
+      else if (r.e.text && r.e.text.trim()) list.appendChild(el("div",null, mmdd(maybeDate(r.d)) + " - " + r.e.text.trim()));
+    });
+  }
+
 
   /* ================= NAME PICKING ================= */
   var BASESTOP = ("a an the and or but so um uh uhh er erm hmm hm mm ah oh ooh yes yeah yep yup no nope ok okay " +
     "who whom as like i i'm im me my mine it it's its is was that this does do did reminds remind remember of " +
     "anyone anybody someone somebody you your you're actually really probably maybe kinda kind sort guess think " +
     "thought know well just honestly definitely totally sure name named called call person guy girl friend best " +
-    "old one with to for be would could say said hear heard what what's whats meet nice hi hello hey there").split(" ");
-  function clean(s){ return (s||"").replace(/[’‘]/g,"'").replace(/[^A-Za-z0-9À-ɏ'\s]/g," ").replace(/\s+/g," "); }
+    "old one with to for be would could say said hear heard what what's whats meet nice hi hello hey there youre whos thats dont").split(" ");
+  function clean(s){ return (s||"").replace(/[’‘']/g,"").replace(/\bwhat is\b/gi,"whats").replace(/[^A-Za-z0-9\u00c0-\u024f\s]/g," ").replace(/\s+/g," "); }
   function phrase(p){ return clean(p).toLowerCase().trim(); }
   function stopSet(){
     var s = {}; BASESTOP.forEach(function(w){ s[w]=1; });
@@ -657,10 +665,11 @@
     if (cfg.nameMode) {
       slots = [mkSlot("them1", val("trigger"), val("lock"))];
     } else {
-      phase = 2;   // default: the name goes straight into the Maybe list
+      phase = 2;   // default: the name goes straight into the prediction list
       slots = [mkSlot("them2", val("trigger"), val("lock"))];
-      if (cfg.maybeFormat === "sentence") slots.push(mkSlot("me2", val("meTrigger"), cfg.meLock));
     }
+    // their own name can be asked at any time, in any order, and is kept for the whole performance
+    if (cfg.maybeFormat === "sentence") slots.push(mkSlot("me", val("meTrigger"), cfg.meLock));
     nameEl.textContent = val("placeholder");
     renderMaybe();
   }
@@ -686,7 +695,7 @@
       var n2 = pickName(region);
       if (n2 && n2 !== s.cand) {
         s.cand = n2; onCand(s);
-        if (cfg.timeout > 0) { clearTimeout(s.timer); s.timer = setTimeout(function(){ if (g===gen) lockSlot(s); }, cfg.timeout*1000); }
+        if (cfg.timeout > 0) { clearTimeout(s.timer); s.timer = setTimeout(function(){ if (slots.indexOf(s) >= 0) lockSlot(s); }, cfg.timeout*1000); }
       }
       if (end < cur.length && s.cand) lockSlot(s);
     });
@@ -701,25 +710,33 @@
   function lockSlot(s){
     if (s.status === "locked") return;
     s.status = "locked"; clearTimeout(s.timer); onCand(s);
-    if (phase === 1) {
+    if (s.key === "me") {
+      if (phase === 2) checkDone();
+    } else if (s.key === "them1") {
       if (!s.cand && cfg.maybeOn) { enterMaybe(); return; }
       phase = cfg.maybeOn ? 1.5 : 3;
-      stopMic();
-    } else if (phase === 2) {
-      var them = slot("them2"), me = slot("me2");
-      if (them.status === "locked" && (!me || me.status === "locked")) { phase = 3; stopMic(); }
+      stopMic(); armed = false;
+    } else if (s.key === "them2") {
+      // the lock word turns the mic off; a double-tap brings it back if their name is still needed
+      if (!checkDone() && cfg.stopAfterLock) { stopMic(); armed = false; }
     }
     log();
+  }
+  function checkDone(){
+    var t = slot("them2"), m = slot("me");
+    if (t && t.status === "locked" && (!m || m.status === "locked")) { phase = 3; stopMic(); armed = false; return true; }
+    return false;
   }
 
   var delayTimer = null;
   function enterMaybe(delayMs){
     if (!cfg.maybeOn || phase === 2 || phase === 3) return;
-    slots.forEach(function(s){ clearTimeout(s.timer); s.status = "locked"; });
+    var me = slot("me");
+    slots.forEach(function(s){ if (s.key !== "me") { clearTimeout(s.timer); s.status = "locked"; } });
     phase = 2; gen++;
-    var keep = slots;
+    var keep = slots.filter(function(s){ return s.key !== "me"; });
     slots = [mkSlot("them2", val("trigger"), val("lock"))];
-    if (cfg.maybeFormat === "sentence") slots.push(mkSlot("me2", val("meTrigger"), cfg.meLock));
+    if (cfg.maybeFormat === "sentence") slots.push(me || mkSlot("me", val("meTrigger"), cfg.meLock));
     slots = slots.concat(keep);
     renderMaybe();
     clearTimeout(delayTimer);
@@ -812,7 +829,7 @@
     $("micStatus").className = micDenied && !micGranted ? "perm-bad" : "";
     $("motionRow").style.display = (maybeActive() && cfg.flipOn) ? "" : "none";
     permSlot("motionSlot", motionGranted === true, "allowMotion", allowMotion);
-    $("motionStatus").textContent = motionGranted === true ? "Ready" : motionGranted === "denied" ? "Blocked. Fully close and reopen Noted to ask again." : "For face-down restart";
+    $("motionStatus").textContent = motionGranted === true ? "Ready" : motionGranted === "denied" ? "Blocked. Fully close and reopen Noted to ask again." : "For face-down start";
     $("motionStatus").className = motionGranted === "denied" ? "perm-bad" : "";
   }
 
@@ -915,7 +932,7 @@
     var d = $("debug");
     if (!cfg.debug || $("settings").classList.contains("active")) { d.style.display = "none"; return; }
     d.style.display = "block";
-    var ph = {1:"1 poem",1.5:"poem done (flip for Maybe)",2:"2 maybe",3:"done"}[phase];
+    var ph = {1:"1 poem",1.5:"poem done (flip for list backup)",2:"2 list",3:"done"}[phase];
     var lines = ["phase: " + ph + "   mic: " + (running?"ON":"off") + "   tilt: " + dbg.beta + (dbg.err? "   err: "+dbg.err : "")];
     slots.forEach(function(s){ if (s.status !== "idle" || s.cand) lines.push(s.key + ": " + s.status + (s.cand ? " → " + s.cand : "")); });
     lines.push("heard: …" + cur.slice(-140));
@@ -984,10 +1001,11 @@
   /* --- previews / dependent bits --- */
   function renderPreviews(){
     $("pv-last").textContent = "I’d call it " + val("placeholder") + ", and you’re to blame.";
+    document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock"); });
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
     $("pv-entry").textContent = entryDate() + " - " + entryText("Kate", "Alina");
     $("startNote").innerHTML = cfg.startMode === "tap"
-      ? "Double-tap anywhere on the poem to start. The small orange dot at the top of the screen tells you it's on. After the reveal, double-tapping again starts Maybe Mode."
+      ? "Double-tap anywhere on the poem to start. The small orange dot at the top of the screen tells you it's on. In Name Mode, double-tapping after the reveal starts the list backup."
       : "Starts as soon as you tap the poem note on the Notes list.";
     renderPerms();
     $("fmtSentence").style.display = cfg.maybeFormat === "sentence" ? "" : "none";
@@ -1001,13 +1019,8 @@
     $("autoCard").classList.toggle("open", cfg.timeout > 0);
     $("autoOn").checked = cfg.timeout > 0;
     $("toVal").textContent = cfg.timeout > 0 ? cfg.timeout : lastTimeout;
-    $("daVal").textContent = cfg.liveDaysBefore;
     $("adVal").textContent = cfg.autoDelay;
     $("adRow").style.display = cfg.readSwitch ? "" : "none";
-    var pdTxt = mmdd(maybeDate(0));
-    $("daNote").innerHTML = cfg.liveDaysBefore === 0
-      ? "Days before the poem's date. The new entry gets the same date as the poem note (<b>" + pdTxt + "</b>)."
-      : "The new entry is dated <b>" + cfg.liveDaysBefore + "</b> day" + (cfg.liveDaysBefore===1?"":"s") + " before the poem note (<b>" + entryDate() + "</b>), so it looks written earlier.";
     $("pdVal").textContent = dayLabel(cfg.poemDays);
     $("f-poemTime").value = cfg.poemTime;
     var pd = poemDate();
@@ -1053,21 +1066,37 @@
     t.addEventListener("change", function(){ if (t.value) { onChange(t.value); saveCfg(); renderSettingsLists(); } });
     return t;
   }
+  function relDays(d){
+    if (d === 0) return "same day as the poem";
+    var n = Math.abs(d);
+    return n + " day" + (n===1?"":"s") + (d > 0 ? " before the poem" : " after the poem");
+  }
   function renderMaybeEd(){
     var ed = $("maybeEd"); ed.innerHTML = "";
-    cfg.maybeList.sort(function(a,b){ return (a.d||0) - (b.d||0); });
-    if (!cfg.maybeList.length) ed.appendChild(el("div","empty-note","No older entries. Add a few so the list looks lived in."));
-    cfg.maybeList.forEach(function(e, i){
-      var it = el("div","ed-item"), f = el("div","ed-f");
+    var rows = listRows(true);
+    rows.forEach(function(r, pos){
+      var it = el("div","ed-item" + (r.live ? " poem" : "")), f = el("div","ed-f");
       var line = el("div","ed-line");
-      line.appendChild(smallStepper(mmdd(maybeDate(e.d)),
-        function(){ e.d = Math.max(cfg.liveDaysBefore + 1, (e.d||0) - 1); saveCfg(); renderMaybeEd(); },
-        function(){ e.d = Math.min(730, (e.d||0) + 1); saveCfg(); renderMaybeEd(); }));
-      line.appendChild(xButton(function(){ cfg.maybeList.splice(i,1); saveCfg(); renderMaybeEd(); }));
-      f.appendChild(line);
-      f.appendChild(edInput(e.text, "Maybe Alex", function(v){ e.text = v; }));
+      if (r.live) {
+        var lab = el("div"); lab.appendChild(el("b",null,"★ The prediction")); 
+        lab.appendChild(el("small",null," · " + (pos+1) + " of " + rows.length + " · " + relDays(cfg.liveDaysBefore) + (cfg.liveDaysBefore < 0 ? " (future)" : "")));
+        f.appendChild(lab);
+        line.appendChild(smallStepper(entryDate(),
+          function(){ cfg.liveDaysBefore = Math.min(730, cfg.liveDaysBefore + 1); saveCfg(); renderMaybeEd(); },
+          function(){ cfg.liveDaysBefore = Math.max(-365, cfg.liveDaysBefore - 1); saveCfg(); renderMaybeEd(); }));
+        f.appendChild(line);
+      } else {
+        var e = r.e;
+        line.appendChild(smallStepper(mmdd(maybeDate(e.d)),
+          function(){ e.d = Math.min(730, (e.d||0) + 1); saveCfg(); renderMaybeEd(); },
+          function(){ e.d = Math.max(-365, (e.d||0) - 1); saveCfg(); renderMaybeEd(); }));
+        line.appendChild(xButton(function(){ cfg.maybeList.splice(cfg.maybeList.indexOf(e),1); saveCfg(); renderMaybeEd(); }));
+        f.appendChild(line);
+        f.appendChild(edInput(e.text, "Maybe Alex", function(v){ e.text = v; }));
+      }
       it.appendChild(f); ed.appendChild(it);
     });
+    renderPreviews();
   }
   function renderNotesEd(){
     var ed = $("notesEd"); ed.innerHTML = "";
@@ -1085,8 +1114,8 @@
         var lab = el("div"); lab.appendChild(el("b",null,"📝 " + val("poemTitle"))); lab.appendChild(el("small",null," the poem note"));
         f.appendChild(lab);
         line.appendChild(smallStepper(dayLabel(cfg.poemDays),
-          function(){ cfg.poemDays = Math.max(0, cfg.poemDays - 1); saveCfg(); renderSettingsLists(); },
-          function(){ cfg.poemDays = Math.min(730, cfg.poemDays + 1); saveCfg(); renderSettingsLists(); }));
+          function(){ cfg.poemDays = Math.min(730, cfg.poemDays + 1); saveCfg(); renderSettingsLists(); },
+          function(){ cfg.poemDays = Math.max(0, cfg.poemDays - 1); saveCfg(); renderSettingsLists(); }));
         line.appendChild(timeInput(cfg.poemTime, function(v){ cfg.poemTime = v; }));
       } else {
         var n = item.n;
@@ -1096,8 +1125,8 @@
         f.appendChild(tl);
         f.appendChild(edInput(n.preview, "Preview text", function(v){ n.preview = v; }));
         line.appendChild(smallStepper(dayLabel(n.days||0),
-          function(){ n.days = Math.max(0, (n.days||0) - 1); saveCfg(); renderNotesEd(); },
-          function(){ n.days = Math.min(730, (n.days||0) + 1); saveCfg(); renderNotesEd(); }));
+          function(){ n.days = Math.min(730, (n.days||0) + 1); saveCfg(); renderNotesEd(); },
+          function(){ n.days = Math.max(0, (n.days||0) - 1); saveCfg(); renderNotesEd(); }));
         line.appendChild(timeInput(n.time, function(v){ n.time = v; }));
       }
       f.appendChild(line);
@@ -1122,7 +1151,7 @@
   var TEXT = ["trigger","lock","placeholder","maybeTemplate","meTrigger","meLock","maybePrefix","maybeHeading","homeTitle","homeCount","poemTitle"];
   TEXT.forEach(function(k){ bindText("f-"+k, k, renderPreviews); });
   bindText("f-poemTitle", "poemTitle", renderNotesEd);
-  ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
+  ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
   $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
   $("startSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.startMode = b.dataset.v; setSeg("startSeg", cfg.startMode); saveCfg(); renderPreviews(); });
   $("fmtSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.maybeFormat = b.dataset.v; setSeg("fmtSeg", cfg.maybeFormat); saveCfg(); renderPreviews(); });
@@ -1130,10 +1159,9 @@
   stepper("toMinus","toPlus", function(){ return cfg.timeout || lastTimeout; }, function(v){ cfg.timeout = v; lastTimeout = v; }, 2, 30);
   stepper("adMinus","adPlus", function(){ return cfg.autoDelay; }, function(v){ cfg.autoDelay = v; }, 0, 30);
   $("f-readSwitch").addEventListener("change", renderSteppers);
-  stepper("daMinus","daPlus", function(){ return cfg.liveDaysBefore; }, function(v){ cfg.liveDaysBefore = v; }, 0, 60);
-  $("daMinus").addEventListener("click", renderMaybeEd); $("daPlus").addEventListener("click", renderMaybeEd);
-  $("pdMinus").addEventListener("click", function(){ cfg.poemDays = Math.max(0, cfg.poemDays - 1); saveCfg(); renderSettingsLists(); });
-  $("pdPlus").addEventListener("click", function(){ cfg.poemDays = Math.min(730, cfg.poemDays + 1); saveCfg(); renderSettingsLists(); });
+  // − = earlier, + = later (the poem note can't be in the future)
+  $("pdMinus").addEventListener("click", function(){ cfg.poemDays = Math.min(730, cfg.poemDays + 1); saveCfg(); renderSettingsLists(); });
+  $("pdPlus").addEventListener("click", function(){ cfg.poemDays = Math.max(0, cfg.poemDays - 1); saveCfg(); renderSettingsLists(); });
   $("f-poemTime").addEventListener("change", function(){ if ($("f-poemTime").value) { cfg.poemTime = $("f-poemTime").value; saveCfg(); renderSettingsLists(); } });
   $("resetAll").addEventListener("click", function(){
     if (!confirmReset) { confirmReset = true; $("resetAll").textContent = "Tap again to reset"; setTimeout(function(){ confirmReset = false; $("resetAll").textContent = "Reset all settings"; }, 3000); return; }
@@ -1144,7 +1172,7 @@
 
   function renderSettings(){
     TEXT.forEach(function(k){ $("f-"+k).value = cfg[k] || ""; });
-    ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
+    ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
     setSeg("fmtSeg", cfg.maybeFormat);
     setSeg("startSeg", cfg.startMode);
@@ -1153,6 +1181,22 @@
     renderSteppers();
     renderMaybeEd();
     renderNotesEd();
+    renderSummaries();
+  }
+
+  /* --- collapsible sections --- */
+  document.querySelectorAll(".group-head").forEach(function(h){
+    h.addEventListener("click", function(){ h.parentNode.classList.toggle("open"); });
+  });
+  function q(s){ return "“" + s + "”"; }
+  function renderSummaries(){
+    if (!$("sum-listen")) return;
+    $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger")) + " → " + q(val("lock"));
+    $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + " · " + cfg.maybeList.length + " other entr" + (cfg.maybeList.length === 1 ? "y" : "ies") + " · prediction " + entryDate() + (cfg.liveDaysBefore < 0 ? " (future)" : "");
+    $("sum-name").textContent = cfg.nameMode ? "On · name goes in the poem" : "Off · name goes in the list";
+    $("sum-look").textContent = val("homeTitle") + " · poem note " + (cfg.poemDays === 0 ? "today " + fmtTime(poemDate()) : dayLabel(cfg.poemDays)) + " · " + cfg.homeNotes.length + " other notes";
+    var langEl = $("f-lang"), langName = langEl.options[langEl.selectedIndex] ? langEl.options[langEl.selectedIndex].text : cfg.lang;
+    $("sum-other").textContent = "Rehearsal " + (cfg.debug ? "on" : "off") + " · " + langName;
   }
 
   /* --- secret entry: tap the ••• button (home screen or poem) --- */
