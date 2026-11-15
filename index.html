@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -41,6 +41,9 @@
   html,body{margin:0;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif}
   body{background:var(--bg);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   body.in-poem{background:var(--notebg)}
+  #poem{touch-action:manipulation}
+  .perm-ok{color:#5ed27a;font-weight:600;font-size:16px;flex:none}
+  .perm-bad{color:#ff6961}
   body.in-settings{background:#1f2023;overflow:hidden}
   .screen{display:none;min-height:100vh}
   .screen.on{display:block}
@@ -274,8 +277,26 @@
 
     <button class="card link-card" id="openGuide"><span><b>Instructions</b><small>How to set up and perform it</small></span><span class="chev">›</span></button>
 
+    <!-- ===== BEFORE YOU PERFORM ===== -->
+    <div class="sec-label">Before You Perform</div>
+
+    <div class="card">
+      <h3>Permissions</h3>
+      <p class="sub">Allow these here, so no pop-up appears when you open the poem or start listening.</p>
+      <div class="mode"><span><b>Microphone</b><small id="micStatus">Not allowed yet</small></span><span id="micSlot"><button class="gbtn blue" id="allowMic">Allow</button></span></div>
+      <div class="mode" id="motionRow"><span><b>Motion</b><small id="motionStatus">For face-down restart</small></span><span id="motionSlot"><button class="gbtn blue" id="allowMotion">Allow</button></span></div>
+      <p class="note"><b>Tip:</b> These stay allowed while Noted is open or in the background. If you fully close Noted (swipe it away), or iPhone closes it to free memory, tap Allow here again before you perform.</p>
+    </div>
+
     <!-- ===== THE TRICK ===== -->
     <div class="sec-label">The Trick</div>
+
+    <div class="card">
+      <h3>Start Listening</h3>
+      <p class="sub">When the mic turns on in the poem note.</p>
+      <div class="seg" id="startSeg"><button data-v="tap">Double-tap the note</button><button data-v="open">When it opens</button></div>
+      <p class="note" id="startNote"></p>
+    </div>
 
     <div class="card">
       <h3>Listening Phrases</h3>
@@ -410,13 +431,13 @@
     <ol class="steps">
       <li><b>Put it on your home screen.</b> Upload the Noted folder to your host (the same way as OneLock), open the link in Safari, then tap Share → <b>Add to Home Screen</b>. It shows up as “Noted”.</li>
       <li><b>Open Settings.</b> Hold the big <b>Notes</b> title for 1 second. Set your phrases and your notes list.</li>
-      <li><b>Allow the mic.</b> Tap the poem note once yourself. Allow <b>Microphone</b>, and <b>Motion</b> if you use face-down restart. Then tap back.</li>
+      <li><b>Allow permissions.</b> In Settings → <b>Permissions</b>, tap <b>Allow</b> for Microphone, and for Motion if you use face-down restart. Do this again any time you've fully closed Noted.</li>
       <li><b>Rehearse.</b> Turn on Rehearsal Mode and run the routine out loud a few times. Turn it off when you're done.</li>
     </ol>
 
     <h2 class="part">Part 2: Performing</h2>
     <ol class="steps">
-      <li><b>Open the poem.</b> Tap the poem note. Listening starts now. Hand them the phone: “This is a poem I wrote for a friend. Read it out loud.”</li>
+      <li><b>Open the poem.</b> Tap the poem note, then <b>double-tap</b> anywhere on the poem to start listening (the orange dot appears at the top). Hand them the phone: “This is a poem I wrote for a friend. Read it out loud.”</li>
       <li><b>Halfway, stop them.</b> Ask: <span class="say" id="g-trig">“Does this remind you of anyone?”</span> Then: “Who?”</li>
       <li><b>They say a name.</b> You say <span class="say" id="g-lock">“Interesting.”</span> The name is set in the last line, which is still below the screen.</li>
       <li><b>They keep reading.</b> They scroll down, and the last line has the name.</li>
@@ -435,10 +456,11 @@
     <table class="ctrl">
       <tr><td>Hold “Notes” title</td><td>Settings</td></tr>
       <tr><td>Hold the poem's date</td><td>Settings</td></tr>
+      <tr><td>Double-tap the poem</td><td>Start listening (after the reveal: Maybe Mode)</td></tr>
       <tr><td>Back button on poem</td><td>Reset for the next person</td></tr>
       <tr><td>Phone face down</td><td>Maybe Mode listens again</td></tr>
     </table>
-    <p class="note"><b>Note:</b> The iPhone shows a small orange dot while the mic is on, and no web app can hide it. The mic only runs while the poem is open, and stops as soon as the name is set.</p>
+    <p class="note"><b>Note:</b> The iPhone shows a small orange dot while the mic is on, and no web app can hide it. The mic only runs after your double-tap, and stops as soon as the name is set.</p>
   </div>
 </div>
 
@@ -463,7 +485,7 @@
       {title:"Groceries", preview:"Eggs, oat milk, coffee, limes", days:17, time:"18:22"},
       {title:"Gift ideas", preview:"Candle, the book she mentioned", days:24, time:"21:03"}
     ],
-    lang:"en-US", debug:false
+    lang:"en-US", debug:false, startMode:"tap"
   };
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   var cfg = clone(DEFAULTS);
@@ -674,11 +696,13 @@
     if (cfg.maybeFormat === "sentence") slots.push(mkSlot("me2", val("meTrigger"), cfg.meLock));
     slots = slots.concat(keep);
     renderMaybe();
+    armed = true;
     startMic();
     log();
   }
 
-  function needsMic(){ return poemOpen && (phase === 1 || phase === 2); }
+  var armed = false;   // true once listening has been started for this performance
+  function needsMic(){ return poemOpen && armed && (phase === 1 || phase === 2); }
 
   /* ================= SPEECH RECOGNITION ================= */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -687,7 +711,10 @@
   function build(){
     rec = new SR();
     rec.lang = cfg.lang; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.onstart = function(){ micOK(); if (testing) setTimeout(function(){ try { rec.stop(); } catch(e){} }, 400); };
+    rec.onaudiostart = function(){ micOK(); };
     rec.onresult = function(e){
+      if (testing) return;
       var fin = "", inter = "";
       for (var i=0;i<e.results.length;i++){
         var t = e.results[i][0].transcript;
@@ -699,13 +726,14 @@
     };
     rec.onend = function(){
       running = false;
+      if (testing) { testing = false; sessionFinal = ""; lastInterim = ""; return; }
       history += sessionFinal + lastInterim; sessionFinal = ""; lastInterim = "";
       if (wanted && needsMic()) setTimeout(startMic, 200);
       log();
     };
     rec.onerror = function(e){
       dbg.err = e.error; log();
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") wanted = false;
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") { wanted = false; micBad(); }
     };
   }
   function startMic(){
@@ -718,18 +746,56 @@
   }
   function stopMic(){ wanted = false; try { rec && rec.stop(); } catch(e){} }
 
+  /* ================= PERMISSIONS ================= */
+  var testing = false, micGranted = false, micDenied = false, motionGranted = false, motionListening = false;
+  function micOK(){ micGranted = true; micDenied = false; renderPerms(); }
+  function micBad(){ testing = false; micDenied = true; renderPerms(); }
+  function allowMic(){
+    if (!SR) { micDenied = true; renderPerms(); return; }
+    stopMic();
+    if (!rec) build();
+    testing = true;
+    try { rec.start(); running = true; } catch(e){ testing = false; }
+  }
+  function allowMotion(){
+    try {
+      if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+        DeviceOrientationEvent.requestPermission().then(function(r){
+          if (r === "granted") { motionGranted = true; listenMotion(); } else motionGranted = "denied";
+          renderPerms();
+        }).catch(function(){ motionGranted = "denied"; renderPerms(); });
+      } else { motionGranted = true; listenMotion(); renderPerms(); }
+    } catch(e){}
+  }
+  function permSlot(slotId, ok, btnId, handler){
+    var slotEl = $(slotId); slotEl.innerHTML = "";
+    if (ok) { slotEl.appendChild(el("span","perm-ok","Allowed ✓")); return; }
+    var b = el("button","gbtn blue","Allow"); b.id = btnId; b.addEventListener("click", handler); slotEl.appendChild(b);
+  }
+  function renderPerms(){
+    if (!$("micSlot")) return;
+    permSlot("micSlot", micGranted, "allowMic", allowMic);
+    $("micStatus").textContent = micGranted ? "Ready" : micDenied ? (SR ? "Blocked. Turn it on in iPhone Settings, then reopen Noted." : "Not supported in this browser") : "Not allowed yet";
+    $("micStatus").className = micDenied && !micGranted ? "perm-bad" : "";
+    $("motionRow").style.display = (cfg.maybeOn && cfg.flipOn) ? "" : "none";
+    permSlot("motionSlot", motionGranted === true, "allowMotion", allowMotion);
+    $("motionStatus").textContent = motionGranted === true ? "Ready" : motionGranted === "denied" ? "Blocked. Fully close and reopen Noted to ask again." : "For face-down restart";
+    $("motionStatus").className = motionGranted === "denied" ? "perm-bad" : "";
+  }
+
   /* ================= FACE-DOWN DETECTION ================= */
   var motionAsked = false, downSince = 0, flipped = false;
   function askMotion(){
-    if (motionAsked || !cfg.maybeOn || !cfg.flipOn) return;
+    if (motionAsked || motionGranted || !cfg.maybeOn || !cfg.flipOn) return;
     motionAsked = true;
     try {
       if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
-        DeviceOrientationEvent.requestPermission().then(function(r){ if (r === "granted") listenMotion(); }).catch(function(){});
+        DeviceOrientationEvent.requestPermission().then(function(r){ if (r === "granted") { motionGranted = true; listenMotion(); } }).catch(function(){});
       } else listenMotion();
     } catch(e){}
   }
   function listenMotion(){
+    if (motionListening) return; motionListening = true;
     window.addEventListener("deviceorientation", function(e){
       if (e.beta == null) return;
       var b = Math.abs(e.beta), now = Date.now();
@@ -768,12 +834,33 @@
     $("home").classList.remove("on"); $("poem").classList.add("on");
     document.body.classList.add("in-poem");
     window.scrollTo(0,0);
-    poemOpen = true;
-    askMotion();
+    poemOpen = true; armed = false;
+    if (cfg.startMode === "open") arm();
+  }
+  function arm(){
+    askMotion();          // inside a tap, so iPhone allows it
+    if (phase === 1.5) { enterMaybe(); return; }   // after the reveal, a double-tap starts Maybe Mode
+    if (phase !== 1 && phase !== 2) return;
+    armed = true;
     startMic();
   }
+  // double-tap anywhere on the poem note
+  (function(){
+    var lastT = 0, lastX = 0, lastY = 0, sx = 0, sy = 0, moved = false;
+    var poemEl = $("poem");
+    poemEl.addEventListener("touchstart", function(e){ var t = e.touches[0]; sx = t.clientX; sy = t.clientY; moved = false; }, {passive:true});
+    poemEl.addEventListener("touchmove", function(e){ var t = e.touches[0]; if (Math.abs(t.clientX-sx) > 12 || Math.abs(t.clientY-sy) > 12) moved = true; }, {passive:true});
+    poemEl.addEventListener("touchend", function(e){
+      if (moved || e.target.closest("#back")) { lastT = 0; return; }
+      var t = e.changedTouches[0], now = Date.now();
+      if (now - lastT < 350 && Math.abs(t.clientX-lastX) < 40 && Math.abs(t.clientY-lastY) < 40) {
+        lastT = 0; e.preventDefault(); arm();
+      } else { lastT = now; lastX = t.clientX; lastY = t.clientY; }
+    });
+    poemEl.addEventListener("dblclick", function(e){ if (!e.target.closest("#back")) arm(); });
+  })();
   function goHome(){
-    poemOpen = false; stopMic(); rec = null; resetState();
+    poemOpen = false; armed = false; stopMic(); resetState();
     renderHome();
     $("poem").classList.remove("on"); $("home").classList.add("on");
     document.body.classList.remove("in-poem");
@@ -816,6 +903,7 @@
   function currentScreen(){ return $("poem").classList.contains("on") ? $("poem") : $("home"); }
   function openSettings(){
     var from = currentScreen(); settingsFrom = from;
+    stopMic();
     renderSettings(); $("settingsBody").scrollTop = 0;
     flip(from, settingsEl, function(){ settingsEl.classList.add("active"); document.body.classList.add("in-settings"); log(); },
       function(){ from.style.visibility = "hidden"; });
@@ -862,6 +950,10 @@
     $("pv-last").textContent = "I’d call it " + val("placeholder") + ", and you’re to blame.";
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
     $("pv-entry").textContent = entryDate() + " - " + entryText("Kate", "Alina");
+    $("startNote").innerHTML = cfg.startMode === "tap"
+      ? "Double-tap anywhere on the poem to start. The small orange dot at the top of the screen tells you it's on. After the reveal, double-tapping again starts Maybe Mode."
+      : "Starts as soon as you tap the poem note on the Notes list.";
+    renderPerms();
     $("fmtSentence").style.display = cfg.maybeFormat === "sentence" ? "" : "none";
     $("fmtName").style.display = cfg.maybeFormat === "name" ? "" : "none";
     $("maybeCard").classList.toggle("open", !!cfg.maybeOn);
@@ -993,6 +1085,7 @@
   bindText("f-poemTitle", "poemTitle", renderNotesEd);
   ["debug","maybeOn","flipOn","readSwitch","showPinned"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
   $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
+  $("startSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.startMode = b.dataset.v; setSeg("startSeg", cfg.startMode); saveCfg(); renderPreviews(); });
   $("fmtSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.maybeFormat = b.dataset.v; setSeg("fmtSeg", cfg.maybeFormat); saveCfg(); renderPreviews(); });
   $("autoOn").addEventListener("change", function(){ cfg.timeout = $("autoOn").checked ? (lastTimeout || 8) : 0; saveCfg(); renderSteppers(); });
   stepper("toMinus","toPlus", function(){ return cfg.timeout || lastTimeout; }, function(v){ cfg.timeout = v; lastTimeout = v; }, 2, 30);
@@ -1013,6 +1106,8 @@
     ["debug","maybeOn","flipOn","readSwitch","showPinned"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
     setSeg("fmtSeg", cfg.maybeFormat);
+    setSeg("startSeg", cfg.startMode);
+    renderPerms();
     if (cfg.timeout > 0) lastTimeout = cfg.timeout;
     renderSteppers();
     renderMaybeEd();
