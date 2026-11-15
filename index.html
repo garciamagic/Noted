@@ -110,6 +110,9 @@
   .notebar .tools svg{width:26px;height:26px}
   .row.has-thumb{padding-right:84px}
   .row .thumb{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:8px;object-fit:cover}
+  .poembox{max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#1f2023;border-radius:12px;padding:14px 16px;
+    font-family:-apple-system,"SF Pro Text",sans-serif;font-size:15px;line-height:1.5;color:#e4e4e7;white-space:pre-line;-webkit-user-select:text;user-select:text}
+  .poembox b{display:block;font-size:18px;margin-bottom:8px;color:#fff}
   .photo-pick{display:flex;gap:12px;align-items:center;margin-top:12px}
   .photo-pick img{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#36383c;flex:none}
   .photo-pick .ph-empty{width:72px;height:72px;border-radius:10px;background:#36383c;display:flex;align-items:center;justify-content:center;color:#6f7176;font-size:12px;flex:none;text-align:center}
@@ -343,9 +346,7 @@
         </div>
 
         <div class="subsec" id="srcYou">
-          <h4>YOU poem</h4>
-          <div class="preview"><small>Built in</small><span id="youPreview"></span></div>
-          <p class="note">The original poem. It can't be changed. Add your own under “My text”.</p>
+          <div class="poembox" id="youPreview"></div>
         </div>
 
         <div class="subsec" id="srcText">
@@ -368,12 +369,6 @@
           <label class="fld"><span>Title (optional)</span><input class="inp" id="f-photoTitle" autocomplete="off" placeholder="No title"></label>
         </div>
 
-        <div class="subsec" id="srcName">
-          <h4>Word in place of [NAME]</h4>
-          <input class="inp" id="f-placeholder" autocomplete="off">
-          <div class="preview"><small>That line</small><span id="pv-last"></span></div>
-          <p class="note warn" id="nameWarn" style="display:none"><b>Heads up:</b> this note has nowhere for Name Mode to put the name. The prediction list still works.</p>
-        </div>
       </div>
     </div>
 
@@ -389,9 +384,11 @@
         </div>
         <div class="subsec">
           <h4>Phrases</h4>
-          <p class="sub">Say the trigger and it listens for a first name. Say the lock word after they answer.</p>
-          <label class="fld"><span>Trigger phrase</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="fld"><span>Lock word</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <p class="sub">Say a trigger and it listens for a first name. Say the lock word after they answer.</p>
+          <label class="fld"><span>Trigger for the person they think of</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="fld"><span>Lock word after that name</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="fld"><span>Trigger for their own name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <p class="note"><b>Tip:</b> The trigger only has to be part of what you say. “Does this <b>remind you of anyone</b>?” works with the default.</p>
           <div class="mode"><span><b>Mic off after each name</b><small>Turns off after “<span class="lk-word">interesting</span>” and after “<span class="mlk-word">nice</span>”. Double-tap or turn face down to listen for the other name.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
         </div>
@@ -417,8 +414,6 @@
           <div class="seg" id="fmtSeg"><button data-v="sentence">Sentence</button><button data-v="name">Name only</button></div>
           <div id="fmtSentence">
             <label class="fld"><span>Sentence ({me} = their name, {them} = the person)</span><input class="inp" id="f-maybeTemplate" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-            <label class="fld"><span>Trigger for their name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-            <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
             <p class="note">Ask their name any time: before, during, or after the poem. It always goes first in the sentence. If their name is missed, the entry uses the Name only style.</p>
           </div>
           <div id="fmtName">
@@ -442,6 +437,7 @@
         <div class="mode-card" id="nameCard">
           <div class="mode" style="margin-top:0"><span><b>Name Mode</b><small>Puts the name into the poem's last line instead of the list</small></span><label class="pill"><input type="checkbox" id="f-nameMode"><span></span></label></div>
           <div class="mc-body">
+            <p class="note warn" id="nameWarn" style="display:none"><b>Heads up:</b> this trick note has no [NAME], so Name Mode has nowhere to put the name. The prediction list still works.</p>
             <div class="mode"><span><b>List as backup</b><small>If the name is missed, listen again and add it to the list</small></span><label class="pill"><input type="checkbox" id="f-maybeOn"><span></span></label></div>
             <div id="backupRows">
               <div class="mode"><span><b>Automatic restart</b><small>If they read “<span class="ph-word">you</span>”, listen again by itself</small></span><label class="pill"><input type="checkbox" id="f-readSwitch"><span></span></label></div>
@@ -545,7 +541,7 @@
     <h2 class="part">Controls</h2>
     <table class="ctrl">
       <tr><td>Tap •••</td><td>Settings</td></tr>
-      <tr><td>Double-tap the poem</td><td>Start listening (in Name Mode, after the reveal: list backup)</td></tr>
+      <tr><td>Double-tap the note</td><td>Mic on, or off if it's already on (in Name Mode, after the reveal: list backup)</td></tr>
       <tr><td>Back button on poem</td><td>Reset for the next person</td></tr>
       <tr><td>Phone face down</td><td>Start listening (in Name Mode: list backup)</td></tr>
     </table>
@@ -563,7 +559,7 @@
   var DEFAULTS = {
     trigger:"remind you of anyone", lock:"interesting", placeholder:"you", timeout:8,
     nameMode:false, maybeOn:true, flipOn:true, stopAfterLock:true, readSwitch:true, autoDelay:5, maybeFormat:"sentence", maybePrefix:"Maybe",
-    maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"nice",
+    maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"right on",
     liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
     maybeList:[{d:74,text:"Alina will think of Kate"},{d:80,text:"Maybe John"},{d:82,text:"Something like Cat or Kate"},{d:95,text:"Alex"}],
     homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"you", customTitle:"", customText:"", photoTitle:"", poemDays:0, poemTime:"20:18",
@@ -1076,6 +1072,7 @@
   }
   function arm(){
     askMotion();          // inside a tap, so iPhone allows it
+    if (running || (wanted && armed)) { stopMic(); armed = false; clearTimeout(delayTimer); log(); return; }   // on → off (backup)
     if (phase === 1.5) { if (cfg.maybeOn) enterMaybe(); return; }   // after the reveal, a double-tap starts Maybe Mode
     if (phase !== 1 && phase !== 2) return;
     clearTimeout(delayTimer);
@@ -1221,16 +1218,15 @@
   /* --- previews / dependent bits --- */
   function renderPreviews(){
     var nl = (noteText() || "").split("\n").filter(function(l){ return /\[name\]/i.test(l); });
-    $("pv-last").textContent = nl.length ? nl[nl.length-1].trim().replace(/\[name\]/gi, val("placeholder")) : "(this note has no [NAME])";
-    $("srcName").style.display = src() === "photo" && !cfg.nameMode ? "none" : "";
     $("nameWarn").style.display = (cfg.nameMode && !nl.length) ? "" : "none";
-    var yl = YOU_POEM.split("\n"); $("youPreview").textContent = yl[0] + " … " + yl[yl.length-1].replace("[NAME]", val("placeholder"));
+    var yp = $("youPreview"); yp.innerHTML = ""; yp.appendChild(el("b",null,"YOU"));
+    yp.appendChild(document.createTextNode(YOU_POEM.replace(/\[NAME\]/g, val("placeholder"))));
     document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock"); });
     document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = cfg.meLock || "nice"; });
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
     $("pv-entry").textContent = entryDate() + " - " + entryText("Kate", "Alina");
     $("startNote").innerHTML = cfg.startMode === "tap"
-      ? "Double-tap anywhere on the poem to start. The small orange dot at the top of the screen tells you it's on. In Name Mode, double-tapping after the reveal starts the list backup."
+      ? "Double-tap anywhere on the note to turn the mic on, and again to turn it off if it ever stays on. The small orange dot at the top of the screen tells you it's on. In Name Mode, double-tapping after the reveal starts the list backup."
       : "Starts as soon as you tap the poem note on the Notes list.";
     renderPerms();
     $("fmtSentence").style.display = cfg.maybeFormat === "sentence" ? "" : "none";
@@ -1373,7 +1369,7 @@
   });
 
   /* --- wire up fields --- */
-  var TEXT = ["trigger","lock","placeholder","maybeTemplate","meTrigger","meLock","maybePrefix","maybeHeading","homeTitle","homeCount"];
+  var TEXT = ["trigger","lock","maybeTemplate","meTrigger","meLock","maybePrefix","maybeHeading","homeTitle","homeCount"];
   TEXT.forEach(function(k){ bindText("f-"+k, k, renderPreviews); });
   bindText("f-customTitle", "customTitle", renderNoteSettings);
   bindText("f-customText", "customText", renderNoteSettings);
@@ -1401,7 +1397,7 @@
     $("photoInput").value = "";
   });
   $("photoRemove").addEventListener("click", function(){ savePhoto(null, function(){ setPhotoBlob(null); renderNoteSettings(); }); });
-  function alertNote(t){ $("pv-last").textContent = t; }
+  function alertNote(t){ $("srcWarn").textContent = t; $("srcWarn").style.display = ""; }
   function renderPhotoPick(){
     var th = $("photoThumb"); th.innerHTML = "";
     if (photoURL) { var im = el("img"); im.src = photoURL; im.alt = ""; th.appendChild(im); }
