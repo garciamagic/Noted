@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Noted">
+<meta name="application-name" content="Noted">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta property="og:title" content="Noted">
+<meta property="og:site_name" content="Noted">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://garciamagic.github.io/Noted/">
+<meta property="og:image" content="https://garciamagic.github.io/Noted/icon-512.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<title>Noted</title>
+<style>
+  :root{
+    --bg:#f2f2f7; --notebg:#ffffff; --card:#ffffff; --ink:#000; --muted:#8a8a8e;
+    --sep:rgba(60,60,67,.2); --glass:rgba(255,255,255,.78); --glassb:rgba(0,0,0,.07);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#000; --notebg:#000; --card:#1c1c1e; --ink:#fff; --muted:#8d8d93;
+      --sep:rgba(84,84,88,.55); --glass:rgba(38,38,40,.82); --glassb:rgba(255,255,255,.09);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif}
+  body{background:var(--bg);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  body.in-poem{background:var(--notebg)}
+  body.in-settings{background:#1f2023;overflow:hidden}
+  .screen{display:none;min-height:100vh}
+  .screen.on{display:block}
+
+  /* ---------- glass buttons ---------- */
+  .topbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 8px) 16px 10px}
+  #home .topbar{background:linear-gradient(var(--bg) 70%, transparent)}
+  #poem .topbar{background:linear-gradient(var(--notebg) 70%, transparent)}
+  .circ{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;
+    background:var(--glass);border:.5px solid var(--glassb);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+    color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.08)}
+  .gpill{height:44px;border-radius:22px;display:flex;align-items:center;gap:22px;padding:0 15px;
+    background:var(--glass);border:.5px solid var(--glassb);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);color:var(--ink)}
+  .circ svg,.gpill svg{width:22px;height:22px}
+
+  /* ---------- home ---------- */
+  .home-head{padding:2px 16px 0}
+  .home-head h1{font-size:34px;font-weight:700;margin:0;letter-spacing:.2px}
+  .home-head .count{font-size:17px;color:var(--muted);margin-top:2px}
+  .pinned{display:flex;justify-content:space-between;align-items:center;padding:30px 16px 4px;font-size:22px;font-weight:700}
+  .pinned svg{width:10px;height:17px;color:var(--muted)}
+  .hsec{font-size:22px;font-weight:700;padding:30px 16px 12px}
+  .hcard{margin:0 16px;background:var(--card);border-radius:26px;overflow:hidden}
+  .row{position:relative;padding:12px 16px 12px 28px}
+  .row:active{background:rgba(127,127,127,.15)}
+  .row + .row::before{content:"";position:absolute;left:28px;right:16px;top:0;border-top:.5px solid var(--sep)}
+  .row .t{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .s{font-size:15px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .row .s b{font-weight:400;margin-right:8px}
+  .row .f{font-size:15px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-top:3px}
+  .row .f svg{width:16px;height:13px}
+  .home-pad{height:calc(env(safe-area-inset-bottom) + 120px)}
+  .bottombar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:12px;align-items:center;
+    padding:14px 22px calc(env(safe-area-inset-bottom) + 10px);background:linear-gradient(transparent, var(--bg) 45%)}
+  .search{flex:1;height:50px;border-radius:25px;display:flex;align-items:center;gap:10px;padding:0 16px;
+    background:var(--glass);border:.5px solid var(--glassb);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+    color:var(--muted);font-size:17px}
+  .search svg{width:20px;height:20px;color:var(--ink)}
+  .search .sp{flex:1}
+  .compose{width:50px;height:50px;border-radius:25px}
+
+  /* ---------- poem ---------- */
+  .notebody{padding:0 20px calc(env(safe-area-inset-bottom) + 90px)}
+  .date{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 18px}
+  .notebody h1{font-size:28px;font-weight:700;margin:0 0 18px}
+  .stanza{font-size:17px;line-height:1.5;margin:0 0 22px}
+  .gap{height:62vh}
+  .maybe{font-size:17px;line-height:1.5}
+  .maybe .hd{margin-bottom:6px}
+  #live{display:none}
+
+  /* ---------- Settings + Instructions (OneLock look) ---------- */
+  #settings,#guide{display:none;position:fixed;inset:0;z-index:10;background:#1f2023;color:#f2f2f4;flex-direction:column;
+    font-family:"Outfit",-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-user-select:none;user-select:none}
+  #guide{z-index:30}
+  #settings.active,#guide.open{display:flex}
+  .flipOut{animation:flipOut .273s cubic-bezier(.55,0,.9,.6) forwards;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+  .flipIn{animation:flipIn .273s cubic-bezier(.1,.4,.45,1) forwards;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+  @keyframes flipOut{from{transform:perspective(1100px) rotateY(0)}to{transform:perspective(1100px) rotateY(90deg)}}
+  @keyframes flipIn{from{transform:perspective(1100px) rotateY(-90deg)}to{transform:perspective(1100px) rotateY(0)}}
+  .pg-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 12px) 20px 12px;
+    background:#1f2023;border-bottom:.5px solid #303236}
+  .pg-head h2{margin:0;font-size:24px;font-weight:600}
+  .pg-btn{background:#1a73e8;color:#fff;border:0;border-radius:12px;padding:10px 22px;font:inherit;font-size:17px;font-weight:500;cursor:pointer}
+  .pg-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    padding:16px 20px calc(env(safe-area-inset-bottom) + 34px);width:100%;max-width:640px;margin:0 auto}
+  .card{display:block;width:100%;background:#2a2b2f;border:0;border-radius:18px;padding:18px;margin-bottom:14px;color:inherit;font:inherit;text-align:left}
+  .card h3{margin:0 0 4px;font-size:20px;font-weight:600}
+  .sub{margin:0 0 14px;color:#a7a8ad;font-size:15px;line-height:1.4}
+  .note{margin:10px 2px 0;color:#a7a8ad;font-size:14px;line-height:1.45}
+  .note b{color:#e4e4e7;font-weight:600}
+  .sec-label{font-size:21px;font-weight:600;margin:26px 4px 12px}
+  .link-card{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .link-card span:first-child{display:flex;flex-direction:column;gap:2px}
+  .link-card b{font-size:19px;font-weight:600}
+  .link-card small{font-size:15px;color:#a7a8ad}
+  .chev{font-size:28px;line-height:1;color:#a7a8ad}
+  .mc-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .mc-head h3{margin:0}
+  .mode-card .mc-body{display:none;margin-top:12px}
+  .mode-card.open .mc-body{display:block}
+  .mode{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#36383c;border-radius:14px;padding:12px 14px 12px 18px;margin-top:12px}
+  .mode b{font-size:17px;font-weight:600}
+  .mode small{display:block;color:#a7a8ad;font-size:13px;font-weight:400;margin-top:2px}
+  .pill{position:relative;flex:none;cursor:pointer}
+  .pill input{position:absolute;opacity:0;width:0;height:0}
+  .pill span{display:flex;align-items:center;justify-content:center;min-width:64px;height:36px;padding:0 14px;border-radius:18px;
+    background:#4a4c51;color:#f2f2f4;font-weight:600;font-size:16px;transition:background .2s}
+  .pill span::after{content:"Off"}
+  .pill input:checked + span{background:#1a73e8}
+  .pill input:checked + span::after{content:"On"}
+  .stepper{display:flex;align-items:center;gap:6px}
+  .stepper button{width:40px;height:40px;border-radius:50%;border:0;background:#44464b;color:#fff;font-size:24px;line-height:1;cursor:pointer;font-family:inherit}
+  .stepper output{min-width:40px;text-align:center;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+  .seg{display:flex;background:#36383c;border-radius:12px;padding:3px;gap:2px}
+  .seg button{flex:1;border:0;background:none;color:#f2f2f4;font:inherit;font-size:15px;padding:10px 6px;border-radius:10px;cursor:pointer}
+  .seg button.on{background:#1a73e8}
+  .btn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .gbtn{display:inline-flex;align-items:center;justify-content:center;background:#36383c;color:#f2f2f4;border:0;border-radius:14px;
+    padding:12px 18px;font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+  .gbtn.blue{background:#1a73e8;color:#fff}
+  .gbtn.red{color:#ff6961;font-weight:500}
+  .gbtn:active,.pg-btn:active,.link-card:active{filter:brightness(1.15)}
+  /* text fields + list editors (same palette) */
+  .fld{display:block;margin-top:12px}
+  .fld > span{display:block;font-size:14px;color:#a7a8ad;margin:0 2px 6px}
+  .inp{width:100%;background:#36383c;border:1px solid #44464b;border-radius:12px;color:#f2f2f4;font:inherit;font-size:17px;padding:11px 14px;
+    -webkit-user-select:text;user-select:text;outline:none;-webkit-appearance:none;appearance:none}
+  .inp:focus{border-color:#1a73e8}
+  .inp::placeholder{color:#6f7176}
+  select.inp{background-image:linear-gradient(45deg,transparent 50%,#a7a8ad 50%),linear-gradient(135deg,#a7a8ad 50%,transparent 50%);
+    background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+  .preview{margin-top:12px;background:#1f2023;border-radius:12px;padding:12px 14px;font-family:-apple-system,"SF Pro Text",sans-serif;font-size:16px;color:#fff}
+  .preview small{display:block;font-family:"Outfit",-apple-system,sans-serif;color:#8e9096;font-size:12px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
+  .ed{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .ed-item{display:flex;gap:8px;align-items:stretch;background:#36383c;border-radius:14px;padding:8px}
+  .ed-item .ed-f{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .ed-item .inp{background:#2a2b2f;border-color:#2a2b2f;font-size:16px;padding:9px 12px;border-radius:10px}
+  .ed-item .inp.big{font-weight:600}
+  .ed-item.sec .inp{font-size:18px;font-weight:600}
+  .ed-tag{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#8ab4f8;margin:2px 4px 0}
+  .ed-item.poem{background:#1a73e833;border:1px solid #1a73e8}
+  .ed-item.poem .ed-f{justify-content:center;padding:4px 6px}
+  .ed-item.poem b{font-size:17px}
+  .ed-item.poem small{color:#a7a8ad;font-size:13px}
+  .ed-ctl{display:flex;flex-direction:column;gap:4px;justify-content:center}
+  .ed-ctl button{width:34px;height:30px;border-radius:9px;border:0;background:#44464b;color:#fff;font-size:15px;line-height:1;cursor:pointer;font-family:inherit;padding:0}
+  .ed-ctl button.x{color:#ff6961}
+  .ed-item.one,.ed-item.sec{align-items:center}
+  .ed-item.one .ed-ctl,.ed-item.sec .ed-ctl{flex-direction:row}
+  .ed-ctl button:disabled{opacity:.3}
+  .empty-note{color:#8e9096;font-size:15px}
+  .stepper output.wide{min-width:104px;font-size:17px}
+  .stepper.sm{gap:4px}
+  .stepper.sm button{width:34px;height:34px;font-size:20px}
+  .stepper.sm output{min-width:84px;font-size:16px}
+  .ed-line{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .inp.time::-webkit-calendar-picker-indicator{display:none}
+  .inp.time{width:112px;flex:none;min-width:0;text-align:center;padding-left:8px;padding-right:8px}
+  .ed-line .inp.big{flex:1;min-width:0}
+  .ed-item .ed-x{width:34px;height:34px;border-radius:9px;border:0;background:#44464b;color:#ff6961;font-size:15px;flex:none;cursor:pointer;padding:0}
+  .note.warn{color:#ffb35c}
+  /* instructions */
+  #guide .pg-body{font-size:17px;line-height:1.55;-webkit-user-select:text;user-select:text}
+  .g-hero{display:flex;gap:14px;align-items:center;background:#2a2b2f;border-radius:18px;padding:16px;margin:4px 0 8px}
+  .g-hero .ic{width:64px;height:64px;border-radius:14px;flex:none;overflow:hidden}
+  .g-hero p{margin:0;color:#e4e4e7;font-size:16px;line-height:1.45}
+  .g-hero b{color:#fff}
+  .part{color:#8ab4f8;font-size:23px;font-weight:600;margin:30px 0 4px;line-height:1.25}
+  .lead{color:#a7a8ad;margin:0 0 14px;font-size:16px}
+  .steps{counter-reset:st;list-style:none;padding:0;margin:0}
+  .steps > li{counter-increment:st;position:relative;padding:0 0 22px 54px;color:#e4e4e7}
+  .steps > li::before{content:counter(st);position:absolute;left:0;top:-2px;width:36px;height:36px;border-radius:50%;background:#1a73e8;color:#fff;
+    font-weight:600;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .steps b{color:#fff;font-weight:600}
+  #guide .note{background:#2a2b2f;border-left:3px solid #8ab4f8;border-radius:12px;padding:12px 14px;margin:12px 0 0;font-size:15px}
+  .ctrl{width:100%;border-collapse:collapse;margin:8px 0;font-size:15px}
+  .ctrl td{padding:10px 8px;border-bottom:.5px solid #36383c;vertical-align:top;color:#e4e4e7}
+  .ctrl td:first-child{color:#8ab4f8;font-weight:600;white-space:nowrap;padding-left:0}
+  .ctrl tr:last-child td{border-bottom:0}
+  .say{background:#36383c;border-radius:8px;padding:1px 8px;color:#fff;white-space:nowrap}
+
+  #debug{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 60px);z-index:20;
+    font:11px/1.35 ui-monospace,Menlo,monospace;color:#999;background:rgba(127,127,127,.14);
+    padding:6px 8px;border-radius:6px;display:none;pointer-events:none;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<!-- ================= HOME (Notes list) ================= -->
+<div id="home" class="screen on">
+  <div class="topbar">
+    <div class="circ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></svg></div>
+    <div class="circ"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></div>
+  </div>
+  <div class="home-head">
+    <h1 id="h-title">Notes</h1>
+    <div class="count" id="h-count"></div>
+  </div>
+  <div class="pinned" id="h-pinned"><span>Pinned</span><svg viewBox="0 0 10 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l6.5 6.5L2 15"/></svg></div>
+  <div id="sections"></div>
+  <div class="home-pad"></div>
+  <div class="bottombar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>
+      <span class="sp">Search</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21M9 21h6"/></svg>
+    </div>
+    <div class="circ compose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5"/><path d="M17.5 3.5a2.1 2.1 0 013 3L12 15l-4 1 1-4z"/></svg></div>
+  </div>
+</div>
+
+<!-- ================= POEM NOTE ================= -->
+<div id="poem" class="screen">
+  <div class="topbar">
+    <div class="circ" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></svg></div>
+    <div class="gpill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M6 11H5v9h14v-9h-1"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+    </div>
+  </div>
+  <div class="notebody">
+    <div class="date" id="date"></div>
+    <h1 id="p-title">YOU</h1>
+    <p class="stanza">There’s a voice I seem to know by heart,<br>That feels like home when we’re apart.<br>A certain laugh, a certain smile,<br>That makes the world stop for a while.</p>
+    <p class="stanza">There’s a way you seem to say my name,<br>That makes the old days feel the same.<br>You know the things I try to hide,<br>And see the me I keep inside.</p>
+    <p class="stanza">You know the stories I forget,<br>The ones we haven’t written yet.<br>You find the words I fail to say,<br>And somehow hear them anyway.</p>
+    <p class="stanza">You make the little moments last,<br>The future now, the present past.<br>You find the right side of my wrong,<br>You make a short goodbye feel long.</p>
+    <p class="stanza">You know the sound of being there,<br>The little ways you show you care.<br>A look, a joke, a passing glance,<br>A second thought, a second chance.</p>
+    <p class="stanza">You’re inside every photograph,<br>In every song, in every laugh.<br>In every day, and every year.<br>In every smile, and every tear.</p>
+    <p class="stanza">You turn my silence into sound,<br>And make my lost feel like my found.<br>You make a lifetime feel so fast,<br>And every moment seem to last.</p>
+    <p class="stanza">If forever had another day,<br>And another day could never fade,<br>I’d give forever just one name,<br>I’d call it <span id="name">you</span>, and you’re to blame.</p>
+    <div id="maybeWrap">
+      <div class="gap"></div>
+      <div class="maybe">
+        <div class="hd" id="m-head"></div>
+        <div id="live"></div>
+        <div id="m-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="debug"></div>
+
+<!-- ================= HIDDEN SETTINGS (hold the "Notes" title or the poem's date) ================= -->
+<div id="settings">
+  <div class="pg-head"><h2>Settings</h2><button class="pg-btn" id="closeSettings">Done</button></div>
+  <div class="pg-body" id="settingsBody">
+
+    <button class="card link-card" id="openGuide"><span><b>Instructions</b><small>How to set up and perform it</small></span><span class="chev">›</span></button>
+
+    <!-- ===== THE TRICK ===== -->
+    <div class="sec-label">The Trick</div>
+
+    <div class="card">
+      <h3>Listening Phrases</h3>
+      <p class="sub">Say the trigger and it starts listening for a first name. Say the lock word after they answer and the name is set.</p>
+      <label class="fld"><span>Trigger phrase</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label class="fld"><span>Lock word</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <p class="note"><b>Tip:</b> The trigger only has to be part of what you say. “Does this <b>remind you of anyone</b>?” works with the default.</p>
+    </div>
+
+    <div class="card">
+      <h3>Before a Name</h3>
+      <p class="sub">The word in the last line until a name is heard. If it misses, they read this.</p>
+      <input class="inp" id="f-placeholder" autocomplete="off">
+      <div class="preview"><small>Last line</small><span id="pv-last"></span></div>
+    </div>
+
+    <div class="card mode-card" id="autoCard">
+      <div class="mc-head"><h3>Auto-Lock</h3><label class="pill"><input type="checkbox" id="autoOn"><span></span></label></div>
+      <p class="sub" style="margin:10px 0 0">Sets the name by itself if you forget to say the lock word.</p>
+      <div class="mc-body">
+        <div class="mode"><b>Seconds after a name</b>
+          <div class="stepper"><button id="toMinus" aria-label="Less">−</button><output id="toVal">8</output><button id="toPlus" aria-label="More">+</button></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Rehearsal Mode</h3>
+      <div class="mode" style="margin-top:8px"><span><b>Show what it hears</b><small>A small box at the top shows each step. Turn it off before you perform.</small></span><label class="pill"><input type="checkbox" id="f-debug"><span></span></label></div>
+    </div>
+
+    <!-- ===== MAYBE MODE ===== -->
+    <div class="sec-label">Maybe Mode</div>
+
+    <div class="card mode-card" id="maybeCard">
+      <div class="mc-head"><h3>Maybe Mode</h3><label class="pill"><input type="checkbox" id="f-maybeOn"><span></span></label></div>
+      <p class="sub" style="margin:10px 0 0">A backup if the name is missed. It listens again, and the name appears in a list hidden far below the poem.</p>
+      <div class="mc-body">
+        <div class="mode"><span><b>Face-down restart</b><small>Turn the phone face down to start listening again</small></span><label class="pill"><input type="checkbox" id="f-flipOn"><span></span></label></div>
+        <div class="mode"><span><b>Automatic restart</b><small>If they read “<span class="ph-word">you</span>”, start listening again by itself</small></span><label class="pill"><input type="checkbox" id="f-readSwitch"><span></span></label></div>
+      </div>
+    </div>
+
+    <div class="card" id="fmtCard">
+      <h3>Entry Format</h3>
+      <p class="sub">How the new entry at the top of the list reads.</p>
+      <div class="seg" id="fmtSeg"><button data-v="sentence">Sentence</button><button data-v="name">Name only</button></div>
+      <div id="fmtSentence">
+        <label class="fld"><span>Sentence ({me} = their name, {them} = the person)</span><input class="inp" id="f-maybeTemplate" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="fld"><span>Trigger for their name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <p class="note"><b>Tip:</b> If their own name is missed, the entry falls back to the Name only style.</p>
+      </div>
+      <div id="fmtName">
+        <label class="fld"><span>Word before the name (leave blank for none)</span><input class="inp" id="f-maybePrefix" autocomplete="off"></label>
+      </div>
+      <div class="preview"><small>New entry</small><span id="pv-entry"></span></div>
+    </div>
+
+    <div class="card">
+      <div class="mc-head"><h3>Entry Date</h3>
+        <div class="stepper"><button id="daMinus" aria-label="Fewer">−</button><output id="daVal">0</output><button id="daPlus" aria-label="More">+</button></div></div>
+      <p class="sub" style="margin:10px 0 0" id="daNote"></p>
+    </div>
+
+    <div class="card">
+      <h3>The List</h3>
+      <p class="sub">Older entries. Each date is counted back from the poem note's date, so they all move when the poem's date moves. They sort newest first by themselves.</p>
+      <label class="fld"><span>Heading</span><input class="inp" id="f-maybeHeading" autocomplete="off"></label>
+      <div class="ed" id="maybeEd"></div>
+      <div class="btn-row"><button class="gbtn blue" id="addEntry">+ Add entry</button></div>
+    </div>
+
+    <!-- ===== NOTES HOME SCREEN ===== -->
+    <div class="sec-label">Notes Home Screen</div>
+
+    <div class="card">
+      <h3>Header</h3>
+      <label class="fld"><span>Title</span><input class="inp" id="f-homeTitle" autocomplete="off"></label>
+      <label class="fld"><span>Count line</span><input class="inp" id="f-homeCount" autocomplete="off"></label>
+      <div class="mode"><b>“Pinned” row</b><label class="pill"><input type="checkbox" id="f-showPinned"><span></span></label></div>
+    </div>
+
+    <div class="card">
+      <h3>Poem Note</h3>
+      <label class="fld"><span>Title</span><input class="inp" id="f-poemTitle" autocomplete="off"></label>
+      <div class="mode"><b>Day</b>
+        <div class="stepper"><button id="pdMinus" aria-label="Later">−</button><output id="pdVal" class="wide">Today</output><button id="pdPlus" aria-label="Earlier">+</button></div></div>
+      <div class="mode"><b>Time</b><input class="inp time" id="f-poemTime" type="time"></div>
+      <p class="note" id="pdNote"></p>
+    </div>
+
+    <div class="card">
+      <h3>Notes List</h3>
+      <p class="sub">Sorted by date, newest first, with the Today, Yesterday and Previous 7 Days sections made for you, just like Notes. Change a note's day or time to move it. The blue one is the poem note.</p>
+      <div class="ed" id="notesEd"></div>
+      <div class="btn-row"><button class="gbtn blue" id="addNote">+ Note</button></div>
+    </div>
+
+    <!-- ===== OTHER ===== -->
+    <div class="sec-label">Other</div>
+
+    <div class="card">
+      <h3>Language</h3>
+      <p class="sub">The language the spectator speaks.</p>
+      <select class="inp" id="f-lang">
+        <option value="en-US">English (US)</option><option value="en-GB">English (UK)</option>
+        <option value="en-AU">English (Australia)</option><option value="en-CA">English (Canada)</option>
+        <option value="en-IN">English (India)</option><option value="es-ES">Español (España)</option>
+        <option value="es-MX">Español (México)</option><option value="fr-FR">Français</option>
+        <option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option><option value="pt-BR">Português (Brasil)</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h3>Reset</h3>
+      <p class="sub">Put every setting back to how it started.</p>
+      <button class="gbtn red" id="resetAll">Reset all settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= INSTRUCTIONS ================= -->
+<div id="guide">
+  <div class="pg-head"><h2>Instructions</h2><button class="pg-btn" id="closeGuide">Back</button></div>
+  <div class="pg-body">
+    <div class="g-hero">
+      <img class="ic" src="icon-192.png" alt="">
+      <p><b>Noted</b> looks like a poem in your Notes app. They read it out loud, and the last line ends with the name of the person it reminded them of.</p>
+    </div>
+
+    <h2 class="part">Part 1: Setting Up</h2>
+    <ol class="steps">
+      <li><b>Put it on your home screen.</b> Upload the Noted folder to your host (the same way as OneLock), open the link in Safari, then tap Share → <b>Add to Home Screen</b>. It shows up as “Noted”.</li>
+      <li><b>Open Settings.</b> Hold the big <b>Notes</b> title for 1 second. Set your phrases and your notes list.</li>
+      <li><b>Allow the mic.</b> Tap the poem note once yourself. Allow <b>Microphone</b>, and <b>Motion</b> if you use face-down restart. Then tap back.</li>
+      <li><b>Rehearse.</b> Turn on Rehearsal Mode and run the routine out loud a few times. Turn it off when you're done.</li>
+    </ol>
+
+    <h2 class="part">Part 2: Performing</h2>
+    <ol class="steps">
+      <li><b>Open the poem.</b> Tap the poem note. Listening starts now. Hand them the phone: “This is a poem I wrote for a friend. Read it out loud.”</li>
+      <li><b>Halfway, stop them.</b> Ask: <span class="say" id="g-trig">“Does this remind you of anyone?”</span> Then: “Who?”</li>
+      <li><b>They say a name.</b> You say <span class="say" id="g-lock">“Interesting.”</span> The name is set in the last line, which is still below the screen.</li>
+      <li><b>They keep reading.</b> They scroll down, and the last line has the name.</li>
+    </ol>
+    <p class="note"><b>Tip:</b> Ask before they reach the last stanza. Once the last line has been on screen for about 2 seconds, it stops waiting.</p>
+
+    <h2 class="part">Part 3: Maybe Mode</h2>
+    <p class="lead">If they read “you” instead of a name.</p>
+    <ol class="steps">
+      <li><b>Turn the phone face down.</b> It starts listening again. With Automatic restart on, it has already started.</li>
+      <li><b>Ask again.</b> In Sentence format, first ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Then ask who it reminds them of and say “Interesting.”</li>
+      <li><b>Show the list.</b> Turn the phone over and scroll down past the poem to the list. The newest entry has the name.</li>
+    </ol>
+
+    <h2 class="part">Controls</h2>
+    <table class="ctrl">
+      <tr><td>Hold “Notes” title</td><td>Settings</td></tr>
+      <tr><td>Hold the poem's date</td><td>Settings</td></tr>
+      <tr><td>Back button on poem</td><td>Reset for the next person</td></tr>
+      <tr><td>Phone face down</td><td>Maybe Mode listens again</td></tr>
+    </table>
+    <p class="note"><b>Note:</b> The iPhone shows a small orange dot while the mic is on, and no web app can hide it. The mic only runs while the poem is open, and stops as soon as the name is set.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function el(tag, cls, text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+
+  /* ================= SETTINGS DATA ================= */
+  var DEFAULTS = {
+    trigger:"remind you of anyone", lock:"interesting", placeholder:"you", timeout:8,
+    maybeOn:true, flipOn:true, readSwitch:true, maybeFormat:"sentence", maybePrefix:"Maybe",
+    maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"nice",
+    liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
+    maybeList:[{d:74,text:"Alina will think of Kate"},{d:80,text:"Maybe John"},{d:82,text:"Something like Cat or Kate"},{d:95,text:"Alex"}],
+    homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, poemTitle:"YOU", poemDays:0, poemTime:"20:18",
+    homeNotes:[
+      {title:"Maybe I could hold your hand Even...", preview:"say I am. More than night enough", days:0, time:"16:50"},
+      {title:"Mercedes GT43 AMG", preview:"No additional text", days:2, time:"14:12"},
+      {title:"Hi I’m Danny and I’m a...magician", preview:"I’ve been clean for 47 days", days:3, time:"11:05"},
+      {title:"Arnazon", preview:"No additional text", days:7, time:"09:40"},
+      {title:"Groceries", preview:"Eggs, oat milk, coffee, limes", days:17, time:"18:22"},
+      {title:"Gift ideas", preview:"Candle, the book she mentioned", days:24, time:"21:03"}
+    ],
+    lang:"en-US", debug:false
+  };
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  var cfg = clone(DEFAULTS);
+  try { Object.assign(cfg, JSON.parse(localStorage.getItem("youPoemCfg4") || "{}")); } catch(e){}
+  if (!Array.isArray(cfg.homeNotes)) cfg.homeNotes = clone(DEFAULTS.homeNotes);
+  if (!Array.isArray(cfg.maybeList)) cfg.maybeList = clone(DEFAULTS.maybeList);
+  if (!/^\d{1,2}:\d{2}$/.test(cfg.poemTime||"")) cfg.poemTime = DEFAULTS.poemTime;
+  function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} }
+  function val(k){ var v = cfg[k]; return (typeof v === "string" && !v.trim()) ? DEFAULTS[k] : v; }
+
+  /* ================= TIME ================= */
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  function pad(n){ return (n<10?"0":"")+n; }
+  function startOfToday(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+  function dayDate(days){ var d = startOfToday(); d.setDate(d.getDate() - (days||0)); return d; }
+  function dateAt(days, time){
+    var d = dayDate(days), m = /^(\d{1,2}):(\d{2})/.exec(time||"") || [0,12,0];
+    d.setHours(+m[1], +m[2], 0, 0); return d;
+  }
+  function fmtTime(d){ return d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
+  function mmdd(d){ return pad(d.getMonth()+1) + "/" + pad(d.getDate()); }
+  // what the Notes list shows for a note this many days old
+  function listWhen(days, time){
+    var d = dateAt(days, time);
+    if (days <= 0) return fmtTime(d);
+    if (days === 1) return "Yesterday";
+    if (days <= 7) return WEEKDAYS[d.getDay()];
+    return (d.getMonth()+1) + "/" + d.getDate() + "/" + String(d.getFullYear()).slice(-2);
+  }
+  function sectionFor(days){
+    if (days <= 0) return "Today";
+    if (days === 1) return "Yesterday";
+    if (days <= 7) return "Previous 7 Days";
+    if (days <= 30) return "Previous 30 Days";
+    var d = dayDate(days), now = new Date();
+    return d.getFullYear() === now.getFullYear() ? MONTHS[d.getMonth()] : String(d.getFullYear());
+  }
+  function dayLabel(days){
+    if (days <= 0) return "Today";
+    if (days === 1) return "Yesterday";
+    var d = dayDate(days);
+    if (days <= 7) return WEEKDAYS[d.getDay()];
+    return MONTHS[d.getMonth()].slice(0,3) + " " + d.getDate();
+  }
+  function poemDate(){ return dateAt(cfg.poemDays, cfg.poemTime); }
+  function poemWhenText(){ return listWhen(cfg.poemDays, cfg.poemTime); }
+  function maybeDate(daysBefore){ var d = dayDate(cfg.poemDays); d.setDate(d.getDate() - (daysBefore||0)); return d; }
+  function entryDate(){ return mmdd(maybeDate(cfg.liveDaysBefore)); }
+
+  /* ================= HOME RENDER ================= */
+  var FOLDER = '<svg viewBox="0 0 16 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 2.2C1 1.5 1.5 1 2.2 1h3.4l1.5 1.6h6.7c.7 0 1.2.5 1.2 1.2v7c0 .7-.5 1.2-1.2 1.2H2.2C1.5 12 1 11.5 1 10.8z"/><path d="M1 4.3h14"/></svg>';
+  var POEM_PREVIEW = "There’s a voice I seem to know by heart,";
+  function noteRow(title, when, preview, isPoem){
+    var r = el("div","row");
+    r.appendChild(el("div","t",title));
+    var s = el("div","s"); s.appendChild(el("b",null,when)); s.appendChild(document.createTextNode(preview)); r.appendChild(s);
+    var f = el("div","f"); f.innerHTML = FOLDER; f.appendChild(document.createTextNode("Notes")); r.appendChild(f);
+    if (isPoem) r.addEventListener("click", openPoem);
+    return r;
+  }
+  function renderHome(){
+    $("h-title").textContent = val("homeTitle");
+    $("h-count").textContent = cfg.homeCount;
+    $("h-pinned").style.display = cfg.showPinned ? "" : "none";
+    var items = cfg.homeNotes.map(function(n){ return {n:n, poem:false, days:n.days||0, t:dateAt(n.days, n.time).getTime()}; });
+    items.push({poem:true, days:cfg.poemDays||0, t:poemDate().getTime()});
+    items.sort(function(a,b){ return b.t - a.t; });
+    var wrap = $("sections"); wrap.innerHTML = "";
+    var lastSec = null, card = null;
+    items.forEach(function(it){
+      var sec = sectionFor(it.days);
+      if (sec !== lastSec) { wrap.appendChild(el("div","hsec",sec)); card = el("div","hcard"); wrap.appendChild(card); lastSec = sec; }
+      if (it.poem) card.appendChild(noteRow(val("poemTitle"), poemWhenText(), POEM_PREVIEW, true));
+      else card.appendChild(noteRow(it.n.title||"", listWhen(it.n.days, it.n.time), it.n.preview||"No additional text", false));
+    });
+  }
+
+  /* ================= POEM / MAYBE RENDER ================= */
+  var nameEl = $("name");
+  function renderPoemStatic(){
+    $("p-title").textContent = val("poemTitle");
+    var pd = poemDate();
+    $("date").textContent = MONTHS[pd.getMonth()] + " " + pd.getDate() + ", " + pd.getFullYear() + " at " + fmtTime(pd);
+    $("maybeWrap").style.display = cfg.maybeOn ? "" : "none";
+    $("m-head").textContent = cfg.maybeHeading;
+    var list = $("m-list"); list.innerHTML = "";
+    sortedMaybe().forEach(function(e){ if (e.text && e.text.trim()) list.appendChild(el("div",null, mmdd(maybeDate(e.d)) + " - " + e.text.trim())); });
+  }
+  function sortedMaybe(){ return cfg.maybeList.slice().sort(function(a,b){ return (a.d||0) - (b.d||0); }); }
+  function entryText(them, me){
+    if (cfg.maybeFormat === "sentence" && me) return val("maybeTemplate").replace(/\{me\}/g, me).replace(/\{them\}/g, them);
+    var p = (cfg.maybePrefix||"").trim();
+    return (p ? p + " " : "") + them;
+  }
+  function renderMaybe(){
+    var live = $("live");
+    var them = slotVal("them2"), me = slotVal("me2");
+    if (!them) { live.style.display = "none"; return; }
+    live.textContent = entryDate() + " - " + entryText(them, me);
+    live.style.display = "block";
+  }
+
+  /* ================= NAME PICKING ================= */
+  var BASESTOP = ("a an the and or but so um uh uhh er erm hmm hm mm ah oh ooh yes yeah yep yup no nope ok okay " +
+    "who whom as like i i'm im me my mine it it's its is was that this does do did reminds remind remember of " +
+    "anyone anybody someone somebody you your you're actually really probably maybe kinda kind sort guess think " +
+    "thought know well just honestly definitely totally sure name named called call person guy girl friend best " +
+    "old one with to for be would could say said hear heard what what's whats meet nice hi hello hey there").split(" ");
+  function clean(s){ return (s||"").replace(/[’‘]/g,"'").replace(/[^A-Za-z0-9À-ɏ'\s]/g," ").replace(/\s+/g," "); }
+  function phrase(p){ return clean(p).toLowerCase().trim(); }
+  function stopSet(){
+    var s = {}; BASESTOP.forEach(function(w){ s[w]=1; });
+    [val("trigger"),val("lock"),val("meTrigger"),cfg.meLock].forEach(function(p){ phrase(p||"").split(" ").forEach(function(w){ if(w) s[w]=1; }); });
+    return s;
+  }
+  function pickName(region){
+    var S = stopSet();
+    var words = region.split(/\s+/).filter(function(w){ return w && w.length>1 && !S[w.toLowerCase()] && !/^\d+$/.test(w); });
+    if (!words.length) return "";
+    var cap = words.filter(function(w){ return /^[A-ZÀ-Þ]/.test(w); });
+    var w = cap.length ? cap[cap.length-1] : words[words.length-1];
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }
+  function isB(ch){ return ch === undefined || ch === " "; }
+  function findWord(hay, needle, from){
+    var i = hay.indexOf(needle, from);
+    while (i !== -1) { if (isB(hay[i-1]) && isB(hay[i+needle.length])) return i; i = hay.indexOf(needle, i+1); }
+    return -1;
+  }
+  function findLastWord(hay, needle, from){
+    var last=-1, i=findWord(hay, needle, from);
+    while (i !== -1) { last=i; i=findWord(hay, needle, i+1); }
+    return last;
+  }
+
+  /* ================= LISTENING STATE ================= */
+  // phase 1 = listening for the poem name, 1.5 = poem done (flip for Maybe), 2 = Maybe listening, 3 = finished
+  var phase = 1, gen = 0, slots = [], cur = "";
+  var poemOpen = false, readTimer = null;
+
+  function mkSlot(key, trig, lock){ return {key:key, trigger:trig, lock:lock, status:"idle", armedAt:0, from:cur.length, cand:"", timer:null}; }
+  function slot(key){ for (var i=0;i<slots.length;i++) if (slots[i].key===key) return slots[i]; return null; }
+  function slotVal(key){ var s=slot(key); return s ? s.cand : ""; }
+
+  function resetState(){
+    slots.forEach(function(s){ clearTimeout(s.timer); });
+    clearTimeout(readTimer); readTimer = null;
+    phase = 1; gen++; history = ""; sessionFinal = ""; lastInterim = ""; cur = "";
+    slots = [mkSlot("them1", val("trigger"), val("lock"))];
+    nameEl.textContent = val("placeholder");
+    renderMaybe();
+  }
+
+  function process(){
+    var g = gen, lower = cur.toLowerCase();
+    slots.forEach(function(s){
+      if (s.status === "locked") return;
+      var t = phrase(s.trigger); if (!t) return;
+      var i = findLastWord(lower, t, s.from);
+      if (i >= 0 && i + t.length > s.armedAt) { s.status = "armed"; s.armedAt = i + t.length; }
+    });
+    slots.forEach(function(s){
+      if (g !== gen || s.status !== "armed") return;
+      var end = cur.length;
+      slots.forEach(function(o){
+        if (o === s || o.status === "locked") return; var ot = phrase(o.trigger); if (!ot) return;
+        var j = findWord(lower, ot, s.armedAt); if (j >= 0 && j < end) end = j;
+      });
+      var region = cur.slice(s.armedAt, end), rl = region.toLowerCase();
+      var l = phrase(s.lock), li = l ? findWord(rl, l, 0) : -1;
+      if (li >= 0) { var n = pickName(region.slice(0, li)); if (n) s.cand = n; lockSlot(s); return; }
+      var n2 = pickName(region);
+      if (n2 && n2 !== s.cand) {
+        s.cand = n2; onCand(s);
+        if (cfg.timeout > 0) { clearTimeout(s.timer); s.timer = setTimeout(function(){ if (g===gen) lockSlot(s); }, cfg.timeout*1000); }
+      }
+      if (end < cur.length && s.cand) lockSlot(s);
+    });
+    log();
+  }
+
+  function onCand(s){
+    if (s.key === "them1" && s.cand) nameEl.textContent = s.cand;
+    if (phase === 2) renderMaybe();
+  }
+
+  function lockSlot(s){
+    if (s.status === "locked") return;
+    s.status = "locked"; clearTimeout(s.timer); onCand(s);
+    if (phase === 1) {
+      if (!s.cand && cfg.maybeOn) { enterMaybe(); return; }
+      phase = cfg.maybeOn ? 1.5 : 3;
+      stopMic();
+    } else if (phase === 2) {
+      var them = slot("them2"), me = slot("me2");
+      if (them.status === "locked" && (!me || me.status === "locked")) { phase = 3; stopMic(); }
+    }
+    log();
+  }
+
+  function enterMaybe(){
+    if (!cfg.maybeOn || phase === 2 || phase === 3) return;
+    slots.forEach(function(s){ clearTimeout(s.timer); s.status = "locked"; });
+    phase = 2; gen++;
+    var keep = slots;
+    slots = [mkSlot("them2", val("trigger"), val("lock"))];
+    if (cfg.maybeFormat === "sentence") slots.push(mkSlot("me2", val("meTrigger"), cfg.meLock));
+    slots = slots.concat(keep);
+    renderMaybe();
+    startMic();
+    log();
+  }
+
+  function needsMic(){ return poemOpen && (phase === 1 || phase === 2); }
+
+  /* ================= SPEECH RECOGNITION ================= */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, running = false, wanted = false, history = "", sessionFinal = "", lastInterim = "";
+
+  function build(){
+    rec = new SR();
+    rec.lang = cfg.lang; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.onresult = function(e){
+      var fin = "", inter = "";
+      for (var i=0;i<e.results.length;i++){
+        var t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) fin += " " + t; else inter += " " + t;
+      }
+      sessionFinal = fin; lastInterim = inter;
+      cur = clean(history + sessionFinal + lastInterim);
+      process();
+    };
+    rec.onend = function(){
+      running = false;
+      history += sessionFinal + lastInterim; sessionFinal = ""; lastInterim = "";
+      if (wanted && needsMic()) setTimeout(startMic, 200);
+      log();
+    };
+    rec.onerror = function(e){
+      dbg.err = e.error; log();
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") wanted = false;
+    };
+  }
+  function startMic(){
+    if (!SR || !needsMic()) return;
+    wanted = true;
+    if (!rec) build();
+    if (running) return;
+    try { rec.start(); running = true; } catch(e){}
+    log();
+  }
+  function stopMic(){ wanted = false; try { rec && rec.stop(); } catch(e){} }
+
+  /* ================= FACE-DOWN DETECTION ================= */
+  var motionAsked = false, downSince = 0, flipped = false;
+  function askMotion(){
+    if (motionAsked || !cfg.maybeOn || !cfg.flipOn) return;
+    motionAsked = true;
+    try {
+      if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+        DeviceOrientationEvent.requestPermission().then(function(r){ if (r === "granted") listenMotion(); }).catch(function(){});
+      } else listenMotion();
+    } catch(e){}
+  }
+  function listenMotion(){
+    window.addEventListener("deviceorientation", function(e){
+      if (e.beta == null) return;
+      var b = Math.abs(e.beta), now = Date.now();
+      dbg.beta = Math.round(e.beta);
+      if (b > 140) {
+        if (!downSince) downSince = now;
+        if (!flipped && now - downSince > 400) { flipped = true; onFlip(); }
+      } else { downSince = 0; if (b < 100) flipped = false; }
+    });
+  }
+  function onFlip(){
+    if (poemOpen && cfg.maybeOn && cfg.flipOn && (phase === 1 || phase === 1.5)) enterMaybe();
+  }
+
+  /* ================= "THEY READ THE LAST LINE" ================= */
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (!en.isIntersecting || !poemOpen || phase !== 1 || readTimer) return;
+        var g = gen;
+        readTimer = setTimeout(function(){
+          readTimer = null;
+          if (g !== gen || phase !== 1) return;
+          var s = slot("them1");
+          if (s && s.cand) lockSlot(s);
+          else if (cfg.maybeOn && cfg.readSwitch) enterMaybe();
+        }, 2500);
+      });
+    }, {threshold: 1}).observe(nameEl);
+  }
+
+  /* ================= NAVIGATION ================= */
+  function openPoem(){
+    resetState();
+    renderPoemStatic();
+    $("home").classList.remove("on"); $("poem").classList.add("on");
+    document.body.classList.add("in-poem");
+    window.scrollTo(0,0);
+    poemOpen = true;
+    askMotion();
+    startMic();
+  }
+  function goHome(){
+    poemOpen = false; stopMic(); rec = null; resetState();
+    renderHome();
+    $("poem").classList.remove("on"); $("home").classList.add("on");
+    document.body.classList.remove("in-poem");
+    window.scrollTo(0,0);
+  }
+  $("back").addEventListener("click", goHome);
+
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) { if (running) stopMic(); }
+    else if (needsMic()) startMic();
+  });
+
+  /* ================= DEBUG ================= */
+  var dbg = {beta:"-", err:""};
+  function log(){
+    var d = $("debug");
+    if (!cfg.debug || $("settings").classList.contains("active")) { d.style.display = "none"; return; }
+    d.style.display = "block";
+    var ph = {1:"1 poem",1.5:"poem done (flip for Maybe)",2:"2 maybe",3:"done"}[phase];
+    var lines = ["phase: " + ph + "   mic: " + (running?"ON":"off") + "   tilt: " + dbg.beta + (dbg.err? "   err: "+dbg.err : "")];
+    slots.forEach(function(s){ if (s.status !== "idle" || s.cand) lines.push(s.key + ": " + s.status + (s.cand ? " → " + s.cand : "")); });
+    lines.push("heard: …" + cur.slice(-140));
+    d.textContent = lines.join("\n");
+  }
+  if (!SR) dbg.err = "speech recognition not supported here";
+
+  /* ================= SETTINGS PAGE ================= */
+  var settingsEl = $("settings"), guideEl = $("guide");
+  var flipping = false;
+  function flip(from, to, show, hide){
+    if (flipping) return; flipping = true;
+    from.classList.add("flipOut");
+    setTimeout(function(){
+      from.classList.remove("flipOut"); hide(); show();
+      to.classList.add("flipIn");
+      setTimeout(function(){ to.classList.remove("flipIn"); flipping = false; }, 283);
+    }, 273);
+  }
+  var settingsFrom = null;
+  function currentScreen(){ return $("poem").classList.contains("on") ? $("poem") : $("home"); }
+  function openSettings(){
+    var from = currentScreen(); settingsFrom = from;
+    renderSettings(); $("settingsBody").scrollTop = 0;
+    flip(from, settingsEl, function(){ settingsEl.classList.add("active"); document.body.classList.add("in-settings"); log(); },
+      function(){ from.style.visibility = "hidden"; });
+  }
+  function closeSettings(){
+    var to = settingsFrom || $("home");
+    saveCfg();
+    flip(settingsEl, to, function(){ to.style.visibility = ""; document.body.classList.remove("in-settings"); applyAfterSettings(); },
+      function(){ settingsEl.classList.remove("active"); });
+  }
+  function applyAfterSettings(){
+    if (rec && rec.lang !== cfg.lang) { stopMic(); rec = null; }
+    if (poemOpen) goHome(); else renderHome();
+    log();
+  }
+  $("closeSettings").addEventListener("click", closeSettings);
+  $("openGuide").addEventListener("click", function(){ fillGuide(); guideEl.querySelector(".pg-body").scrollTop = 0; flip(settingsEl, guideEl, function(){ guideEl.classList.add("open"); }, function(){}); });
+  $("closeGuide").addEventListener("click", function(){ flip(guideEl, settingsEl, function(){}, function(){ guideEl.classList.remove("open"); }); });
+
+  function cap1(s){ s = (s||"").trim(); return s.charAt(0).toUpperCase() + s.slice(1); }
+  function fillGuide(){
+    $("g-lock").textContent = "“" + cap1(val("lock")) + ".”";
+    $("g-me").textContent = "“" + cap1(val("meTrigger")) + "?”";
+    $("g-melock").textContent = "“" + cap1(cfg.meLock || "nice") + "…”";
+  }
+
+  /* --- small helpers --- */
+  function bindText(id, key, after){
+    var f = $(id);
+    f.addEventListener("input", function(){ cfg[key] = f.value; saveCfg(); if (after) after(); });
+  }
+  function bindCheck(id, key, after){
+    var f = $(id);
+    f.addEventListener("change", function(){ cfg[key] = f.checked; saveCfg(); if (after) after(); });
+  }
+  function setSeg(id, v){ $(id).querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", b.dataset.v === v); }); }
+  function stepper(minus, plus, get, set, min, max){
+    $(minus).addEventListener("click", function(){ set(Math.max(min, get()-1)); saveCfg(); renderSteppers(); });
+    $(plus).addEventListener("click", function(){ set(Math.min(max, get()+1)); saveCfg(); renderSteppers(); });
+  }
+
+  /* --- previews / dependent bits --- */
+  function renderPreviews(){
+    $("pv-last").textContent = "I’d call it " + val("placeholder") + ", and you’re to blame.";
+    document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
+    $("pv-entry").textContent = entryDate() + " - " + entryText("Kate", "Alina");
+    $("fmtSentence").style.display = cfg.maybeFormat === "sentence" ? "" : "none";
+    $("fmtName").style.display = cfg.maybeFormat === "name" ? "" : "none";
+    $("maybeCard").classList.toggle("open", !!cfg.maybeOn);
+    ["fmtCard"].forEach(function(id){ $(id).style.opacity = cfg.maybeOn ? "" : ".5"; });
+  }
+  var lastTimeout = 8;
+  function renderSteppers(){
+    $("autoCard").classList.toggle("open", cfg.timeout > 0);
+    $("autoOn").checked = cfg.timeout > 0;
+    $("toVal").textContent = cfg.timeout > 0 ? cfg.timeout : lastTimeout;
+    $("daVal").textContent = cfg.liveDaysBefore;
+    var pdTxt = mmdd(maybeDate(0));
+    $("daNote").innerHTML = cfg.liveDaysBefore === 0
+      ? "Days before the poem's date. The new entry gets the same date as the poem note (<b>" + pdTxt + "</b>)."
+      : "The new entry is dated <b>" + cfg.liveDaysBefore + "</b> day" + (cfg.liveDaysBefore===1?"":"s") + " before the poem note (<b>" + entryDate() + "</b>), so it looks written earlier.";
+    $("pdVal").textContent = dayLabel(cfg.poemDays);
+    $("f-poemTime").value = cfg.poemTime;
+    var pd = poemDate();
+    var warn = cfg.poemDays === 0 && pd.getTime() > Date.now();
+    $("pdNote").className = "note" + (warn ? " warn" : "");
+    $("pdNote").innerHTML = (warn ? "<b>Heads up:</b> that time is later than now, which a real note can't be. " : "") +
+      "In the list it shows <b>" + poemWhenText() + "</b> under <b>" + sectionFor(cfg.poemDays) + "</b>. On the poem: <b>" +
+      MONTHS[pd.getMonth()] + " " + pd.getDate() + ", " + pd.getFullYear() + " at " + fmtTime(pd) + "</b>.";
+    renderPreviews();
+  }
+
+  /* --- list editors --- */
+  function ctlButtons(arr, i, rerender, canDelete){
+    var c = el("div","ed-ctl");
+    var up = el("button",null,"↑"), dn = el("button",null,"↓");
+    up.disabled = i === 0; dn.disabled = i === arr.length-1;
+    up.addEventListener("click", function(){ var t=arr[i]; arr[i]=arr[i-1]; arr[i-1]=t; saveCfg(); rerender(); });
+    dn.addEventListener("click", function(){ var t=arr[i]; arr[i]=arr[i+1]; arr[i+1]=t; saveCfg(); rerender(); });
+    c.appendChild(up); c.appendChild(dn);
+    if (canDelete) {
+      var x = el("button","x","✕");
+      x.addEventListener("click", function(){ arr.splice(i,1); saveCfg(); rerender(); });
+      c.appendChild(x);
+    }
+    return c;
+  }
+  function edInput(value, placeholder, onInput, cls){
+    var f = el("input","inp" + (cls ? " " + cls : ""));
+    f.value = value || ""; f.placeholder = placeholder; f.autocomplete = "off";
+    f.addEventListener("input", function(){ onInput(f.value); saveCfg(); });
+    return f;
+  }
+  function smallStepper(label, onMinus, onPlus){
+    var st = el("div","stepper sm");
+    var m = el("button",null,"−"), o = el("output",null,label), pl = el("button",null,"+");
+    m.addEventListener("click", onMinus); pl.addEventListener("click", onPlus);
+    st.appendChild(m); st.appendChild(o); st.appendChild(pl);
+    return st;
+  }
+  function xButton(onClick){ var x = el("button","ed-x","✕"); x.addEventListener("click", onClick); return x; }
+  function timeInput(value, onChange){
+    var t = el("input","inp time"); t.type = "time"; t.value = value || "12:00";
+    t.addEventListener("change", function(){ if (t.value) { onChange(t.value); saveCfg(); renderSettingsLists(); } });
+    return t;
+  }
+  function renderMaybeEd(){
+    var ed = $("maybeEd"); ed.innerHTML = "";
+    cfg.maybeList.sort(function(a,b){ return (a.d||0) - (b.d||0); });
+    if (!cfg.maybeList.length) ed.appendChild(el("div","empty-note","No older entries. Add a few so the list looks lived in."));
+    cfg.maybeList.forEach(function(e, i){
+      var it = el("div","ed-item"), f = el("div","ed-f");
+      var line = el("div","ed-line");
+      line.appendChild(smallStepper(mmdd(maybeDate(e.d)),
+        function(){ e.d = Math.max(cfg.liveDaysBefore + 1, (e.d||0) - 1); saveCfg(); renderMaybeEd(); },
+        function(){ e.d = Math.min(730, (e.d||0) + 1); saveCfg(); renderMaybeEd(); }));
+      line.appendChild(xButton(function(){ cfg.maybeList.splice(i,1); saveCfg(); renderMaybeEd(); }));
+      f.appendChild(line);
+      f.appendChild(edInput(e.text, "Maybe Alex", function(v){ e.text = v; }));
+      it.appendChild(f); ed.appendChild(it);
+    });
+  }
+  function renderNotesEd(){
+    var ed = $("notesEd"); ed.innerHTML = "";
+    var items = cfg.homeNotes.map(function(n){ return {n:n, t:dateAt(n.days, n.time).getTime()}; });
+    items.push({poem:true, t:poemDate().getTime()});
+    items.sort(function(a,b){ return b.t - a.t; });
+    var lastSec = null;
+    items.forEach(function(item){
+      var days = item.poem ? cfg.poemDays : (item.n.days||0);
+      var sec = sectionFor(days);
+      if (sec !== lastSec) { ed.appendChild(el("div","ed-tag",sec)); lastSec = sec; }
+      var it = el("div","ed-item" + (item.poem ? " poem" : "")), f = el("div","ed-f");
+      var line = el("div","ed-line");
+      if (item.poem) {
+        var lab = el("div"); lab.appendChild(el("b",null,"📝 " + val("poemTitle"))); lab.appendChild(el("small",null," the poem note"));
+        f.appendChild(lab);
+        line.appendChild(smallStepper(dayLabel(cfg.poemDays),
+          function(){ cfg.poemDays = Math.max(0, cfg.poemDays - 1); saveCfg(); renderSettingsLists(); },
+          function(){ cfg.poemDays = Math.min(730, cfg.poemDays + 1); saveCfg(); renderSettingsLists(); }));
+        line.appendChild(timeInput(cfg.poemTime, function(v){ cfg.poemTime = v; }));
+      } else {
+        var n = item.n;
+        var tl = el("div","ed-line");
+        tl.appendChild(edInput(n.title, "Title", function(v){ n.title = v; }, "big"));
+        tl.appendChild(xButton(function(){ cfg.homeNotes.splice(cfg.homeNotes.indexOf(n),1); saveCfg(); renderNotesEd(); }));
+        f.appendChild(tl);
+        f.appendChild(edInput(n.preview, "Preview text", function(v){ n.preview = v; }));
+        line.appendChild(smallStepper(dayLabel(n.days||0),
+          function(){ n.days = Math.max(0, (n.days||0) - 1); saveCfg(); renderNotesEd(); },
+          function(){ n.days = Math.min(730, (n.days||0) + 1); saveCfg(); renderNotesEd(); }));
+        line.appendChild(timeInput(n.time, function(v){ n.time = v; }));
+      }
+      f.appendChild(line);
+      it.appendChild(f); ed.appendChild(it);
+    });
+  }
+  // the poem's date affects the Maybe dates, the poem card, and the list order
+  function renderSettingsLists(){ renderSteppers(); renderMaybeEd(); renderNotesEd(); }
+  $("addEntry").addEventListener("click", function(){
+    var maxD = cfg.maybeList.reduce(function(m,e){ return Math.max(m, e.d||0); }, cfg.liveDaysBefore);
+    cfg.maybeList.push({d:maxD + 7, text:""}); saveCfg(); renderMaybeEd();
+    var ins = $("maybeEd").querySelectorAll("input"); ins[ins.length-1].focus();
+  });
+  $("addNote").addEventListener("click", function(){
+    var n = {title:"", preview:"", days:0, time:"12:00"};
+    var now = new Date(Date.now() - 60*60000); n.time = pad(now.getHours()) + ":" + pad(now.getMinutes());
+    cfg.homeNotes.push(n); saveCfg(); renderNotesEd();
+    var ins = $("notesEd").querySelectorAll(".inp.big"); if (ins.length) ins[0].focus();
+  });
+
+  /* --- wire up fields --- */
+  var TEXT = ["trigger","lock","placeholder","maybeTemplate","meTrigger","meLock","maybePrefix","maybeHeading","homeTitle","homeCount","poemTitle"];
+  TEXT.forEach(function(k){ bindText("f-"+k, k, renderPreviews); });
+  bindText("f-poemTitle", "poemTitle", renderNotesEd);
+  ["debug","maybeOn","flipOn","readSwitch","showPinned"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
+  $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
+  $("fmtSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.maybeFormat = b.dataset.v; setSeg("fmtSeg", cfg.maybeFormat); saveCfg(); renderPreviews(); });
+  $("autoOn").addEventListener("change", function(){ cfg.timeout = $("autoOn").checked ? (lastTimeout || 8) : 0; saveCfg(); renderSteppers(); });
+  stepper("toMinus","toPlus", function(){ return cfg.timeout || lastTimeout; }, function(v){ cfg.timeout = v; lastTimeout = v; }, 2, 30);
+  stepper("daMinus","daPlus", function(){ return cfg.liveDaysBefore; }, function(v){ cfg.liveDaysBefore = v; }, 0, 60);
+  $("daMinus").addEventListener("click", renderMaybeEd); $("daPlus").addEventListener("click", renderMaybeEd);
+  $("pdMinus").addEventListener("click", function(){ cfg.poemDays = Math.max(0, cfg.poemDays - 1); saveCfg(); renderSettingsLists(); });
+  $("pdPlus").addEventListener("click", function(){ cfg.poemDays = Math.min(730, cfg.poemDays + 1); saveCfg(); renderSettingsLists(); });
+  $("f-poemTime").addEventListener("change", function(){ if ($("f-poemTime").value) { cfg.poemTime = $("f-poemTime").value; saveCfg(); renderSettingsLists(); } });
+  $("resetAll").addEventListener("click", function(){
+    if (!confirmReset) { confirmReset = true; $("resetAll").textContent = "Tap again to reset"; setTimeout(function(){ confirmReset = false; $("resetAll").textContent = "Reset all settings"; }, 3000); return; }
+    confirmReset = false; $("resetAll").textContent = "Reset all settings";
+    cfg = clone(DEFAULTS); saveCfg(); renderSettings();
+  });
+  var confirmReset = false;
+
+  function renderSettings(){
+    TEXT.forEach(function(k){ $("f-"+k).value = cfg[k] || ""; });
+    ["debug","maybeOn","flipOn","readSwitch","showPinned"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
+    $("f-lang").value = cfg.lang;
+    setSeg("fmtSeg", cfg.maybeFormat);
+    if (cfg.timeout > 0) lastTimeout = cfg.timeout;
+    renderSteppers();
+    renderMaybeEd();
+    renderNotesEd();
+  }
+
+  /* --- secret entry: hold the title or the poem's date --- */
+  function holdToOpen(target){
+    var t = null;
+    function down(){ t = setTimeout(openSettings, 900); }
+    function up(){ clearTimeout(t); }
+    target.addEventListener("touchstart", down, {passive:true});
+    target.addEventListener("touchend", up); target.addEventListener("touchmove", up, {passive:true});
+    target.addEventListener("mousedown", down); target.addEventListener("mouseup", up);
+    target.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+  }
+  holdToOpen($("h-title")); holdToOpen($("date"));
+
+  /* ================= START ================= */
+  resetState();
+  renderHome();
+  log();
+})();
+</script>
+</body>
+</html>
