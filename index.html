@@ -389,8 +389,13 @@
           <label class="fld"><span>Lock word after that name</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <label class="fld"><span>Trigger for their own name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <p class="note"><b>Tip:</b> The trigger only has to be part of what you say. “Does this <b>remind you of anyone</b>?” works with the default.</p>
+          <p class="note"><b>Tip:</b> A phrase only has to be part of what you say. You can also list other ways the iPhone might hear it, separated by commas, like <b>right on, write on, alright on</b>. Rehearsal Mode shows exactly what it hears.</p>
           <div class="mode"><span><b>Mic off after each name</b><small>Turns off after “<span class="lk-word">interesting</span>” and after “<span class="mlk-word">nice</span>”. Double-tap or turn face down to listen for the other name.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
+        </div>
+        <div class="subsec">
+          <h4>Noisy Rooms</h4>
+          <div class="seg" id="sensSeg"><button data-v="exact">Exact</button><button data-v="normal">Normal</button><button data-v="noisy">Noisy room</button></div>
+          <p class="note" id="sensNote"></p>
         </div>
         <div class="subsec mode-card" id="autoCard">
           <div class="mc-head"><h4>Auto-Lock</h4><label class="pill"><input type="checkbox" id="autoOn"><span></span></label></div>
@@ -571,7 +576,7 @@
       {title:"Groceries", preview:"Eggs, oat milk, coffee, limes", days:17, time:"18:22"},
       {title:"Gift ideas", preview:"Candle, the book she mentioned", days:24, time:"21:03"}
     ],
-    lang:"en-US", debug:false, startMode:"tap"
+    lang:"en-US", debug:false, sensitivity:"normal", startMode:"tap"
   };
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   var cfg = clone(DEFAULTS);
@@ -780,21 +785,70 @@
     "anyone anybody someone somebody you your you're actually really probably maybe kinda kind sort guess think " +
     "thought know well just honestly definitely totally sure name named called call person guy girl friend best " +
     "old one with to for be would could say said hear heard what what's whats meet nice hi hello hey there youre whos thats dont").split(" ");
-  function clean(s){ return (s||"").replace(/[’‘']/g,"").replace(/\bwhat is\b/gi,"whats").replace(/[^A-Za-z0-9\u00c0-\u024f\s]/g," ").replace(/\s+/g," "); }
+  function clean(s){ return (s||"").replace(/[’‘']/g,"").replace(/\bwhat is\b/gi,"whats").replace(/\b(any|some|every) (one|body)\b/gi,"$1$2").replace(/[^A-Za-z0-9\u00c0-\u024f\s]/g," ").replace(/\s+/g," "); }
   function phrase(p){ return clean(p).toLowerCase().trim(); }
+  // common first names (and family words) — in noisy rooms these are preferred over random words
+  var NAMES = {}; "aaron abby abigail adam addison adrian aiden aimee alan alana albert alex alexa alexander alexandra alexis alfred ali alice alicia alina alisha alison allie allison alyssa amanda amber amelia amy ana andre andrea andrew andy angel angela angelica angie anita ann anna annabelle anne annie anthony antonio april aria ariana ariel arnold arthur ashley aubrey audrey austin ava avery barbara barry beau becca becky bella ben benjamin bernard beth bethany betty beverly bianca bill billy blake bob bobby bonnie brad bradley brady brandon brenda brendan brent brett brian briana bridget brittany brooke brooklyn bruce bryan bryce caleb cameron camila candace cara carl carla carlos carly carmen carol caroline carolyn carrie carson carter casey cassie cat catherine cathy charles charlie charlotte chase chelsea cheryl chloe chris christian christina christine christopher cindy claire clara clark claudia clay clint cody colby cole colin colleen connie connor corey courtney craig crystal curtis cynthia daisy dakota dale dallas dan dana daniel daniela danielle danny darla darren dave david dawn dean deb debbie deborah delaney denise dennis derek desiree destiny devin diana diane dianne dominic don donald donna doris dorothy doug douglas drew dustin dylan earl ed eddie edgar edward elaine eleanor eli elijah elizabeth ella ellen ellie emily emma eric erica erik erin ethan eva evan evelyn faith felicia fernando frances frank frankie fred gabby gabriel gabriella gail gary gavin gene george georgia gerald gina glen glenn gloria grace grant greg gregory gwen hailey haley hank hannah harold harper harry hayden hazel heather heidi helen henry holly hope howard hunter ian isaac isabel isabella isaiah ivan jack jackie jackson jacob jacqueline jade jaden jake james jamie jan jane janet janice jared jasmine jason jay jayden jean jeff jeffrey jen jenna jennifer jenny jeremy jerry jesse jessica jess jessie jill jim jimmy jo joan joanna joe joel joey john johnny jon jonathan jordan jose joseph josh joshua joy joyce juan judy julia julian julie justin kaitlyn kara karen kari kate katelyn katherine kathleen kathryn kathy katie kay kayla keith kelly kelsey ken kendall kenneth kenny kevin kim kimberly kristen kristin kristy kyle laura lauren layla leah lee leo leon leslie liam lily linda lindsay lindsey lisa liz logan lori lorraine louis lucas lucy luis luke lydia lynn mackenzie madeline madison maggie mandy marco margaret maria mariah marie marilyn mario marissa mark marsha martha martin marvin mary mason matt matthew maureen max maya megan meghan melanie melissa mia michael michele michelle miguel mike mila miles mindy miranda missy molly monica morgan nancy naomi natalie nate nathan nicholas nick nicole nina noah nora olivia oliver omar owen paige pam pamela pat patricia patrick paul paula peggy penny peter phil philip phillip phyllis rachel ralph randy ray raymond rebecca reese regina renee rex rhonda ricardo rich richard rick ricky riley rita rob robert roberta robin rocky rodney roger ron ronald ronnie rosa rose ross roy ruby russell ruth ryan sabrina sadie sally sam samantha samuel sandra sandy sara sarah savannah scarlett scott sean selena seth shane shannon sharon shawn sheila shelby shelly sherry shirley sierra simon sofia sophia sophie stacy stella stephanie stephen steve steven sue summer susan suzanne sydney tammy tanya tara taylor ted teresa terri terry tessa theresa thomas tiffany tim timothy tina todd tom tommy tony tracy travis trevor troy tyler valerie vanessa vera veronica vicki vickie victor victoria vince vincent violet virginia walter wanda warren wayne wendy wesley whitney will william willie wyatt xavier yolanda yvonne zach zachary zoe zoey mom mommy mama dad daddy papa grandma grandpa granny nana gramps grammy wife husband brother sister son daughter aunt uncle cousin boyfriend girlfriend fiance babe".split(" ").forEach(function(n){ NAMES[n] = 1; });
   function stopSet(){
     var s = {}; BASESTOP.forEach(function(w){ s[w]=1; });
-    [val("trigger"),val("lock"),val("meTrigger"),cfg.meLock].forEach(function(p){ phrase(p||"").split(" ").forEach(function(w){ if(w) s[w]=1; }); });
+    [val("trigger"),val("lock"),val("meTrigger"),cfg.meLock].forEach(function(p){ phrase((p||"").replace(/,/g," ")).split(" ").forEach(function(w){ if(w) s[w]=1; }); });
     return s;
   }
   function pickName(region){
     var S = stopSet();
     var words = region.split(/\s+/).filter(function(w){ return w && w.length>1 && !S[w.toLowerCase()] && !/^\d+$/.test(w); });
     if (!words.length) return "";
+    var listed = words.filter(function(w){ return NAMES[w.toLowerCase()]; });
     var cap = words.filter(function(w){ return /^[A-ZÀ-Þ]/.test(w); });
-    var w = cap.length ? cap[cap.length-1] : words[words.length-1];
+    var w = listed.length ? listed[listed.length-1]
+          : cap.length ? cap[cap.length-1]
+          : cfg.sensitivity === "noisy" ? "" : words[words.length-1];   // noisy room: don't guess from random words
+    if (!w) return "";
     return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   }
+  /* Phrase matching that tolerates mishearing.
+     Each setting can list several versions, separated by commas.
+     exact  = every word exactly
+     normal = every word, long words may be off by one letter
+     noisy  = also allows one missing word in phrases of 3+ words, and more letter slips */
+  function tokens(str){ var out = [], re = /\S+/g, m; while ((m = re.exec(str))) out.push({w:m[0], s:m.index, e:m.index + m[0].length}); return out; }
+  function pats(str){ return (str||"").split(",").map(phrase).filter(Boolean).map(function(p){ return p.split(" "); }); }
+  function lev(a, b){
+    if (Math.abs(a.length - b.length) > 2) return 9;
+    var prev = [], i, j; for (j = 0; j <= b.length; j++) prev[j] = j;
+    for (i = 1; i <= a.length; i++) {
+      var cur2 = [i];
+      for (j = 1; j <= b.length; j++) cur2[j] = Math.min(prev[j]+1, cur2[j-1]+1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+      prev = cur2;
+    }
+    return prev[b.length];
+  }
+  function wordEq(a, b){
+    if (a === b) return true;
+    var mode = cfg.sensitivity || "normal";
+    if (mode === "exact") return false;
+    var n = Math.min(a.length, b.length), d;
+    if (mode === "normal") return n >= 5 && lev(a, b) <= 1;
+    d = lev(a, b);
+    return (n >= 4 && d <= 1) || (n >= 8 && d <= 2);
+  }
+  function needed(len){ return (cfg.sensitivity === "noisy" && len >= 3) ? len - 1 : len; }
+  // every place in T (from char "from" on) where one of the patterns is heard
+  function matches(T, P, from){
+    var out = [];
+    P.forEach(function(p){
+      var need = needed(p.length);
+      for (var k = 0; k + p.length <= T.length; k++) {
+        if (T[k].s < from) continue;
+        var hit = 0, first = -1, last = -1;
+        for (var i = 0; i < p.length; i++) if (wordEq(T[k+i].w, p[i])) { hit++; if (first < 0) first = k+i; last = k+i; }
+        if (hit >= need && first >= 0) out.push({s:T[first].s, e:T[last].e});
+      }
+    });
+    return out;
+  }
+  function firstMatch(T, P, from){ var m = matches(T, P, from); m.sort(function(a,b){ return a.s - b.s; }); return m[0] || null; }
+  function lastMatch(T, P, from){ var m = matches(T, P, from); m.sort(function(a,b){ return b.e - a.e; }); return m[0] || null; }
   function isB(ch){ return ch === undefined || ch === " "; }
   function findWord(hay, needle, from){
     var i = hay.indexOf(needle, from);
@@ -833,23 +887,27 @@
   }
 
   function process(){
-    var g = gen, lower = cur.toLowerCase();
+    var g = gen, lower = cur.toLowerCase(), T = tokens(lower);
     slots.forEach(function(s){
       if (s.status === "locked") return;
-      var t = phrase(s.trigger); if (!t) return;
-      var i = findLastWord(lower, t, s.from);
-      if (i >= 0 && i + t.length > s.armedAt) { s.status = "armed"; s.armedAt = i + t.length; }
+      var m = lastMatch(T, pats(s.trigger), s.from);
+      if (m && m.e > s.armedAt) { s.status = "armed"; s.armedAt = m.e; }
     });
     slots.forEach(function(s){
       if (g !== gen || s.status !== "armed") return;
       var end = cur.length;
       slots.forEach(function(o){
-        if (o === s || o.status === "locked") return; var ot = phrase(o.trigger); if (!ot) return;
-        var j = findWord(lower, ot, s.armedAt); if (j >= 0 && j < end) end = j;
+        if (o === s || o.status === "locked") return;
+        var m = firstMatch(T, pats(o.trigger), s.armedAt); if (m && m.s < end) end = m.s;
       });
-      var region = cur.slice(s.armedAt, end), rl = region.toLowerCase();
-      var l = phrase(s.lock), li = l ? findWord(rl, l, 0) : -1;
-      if (li >= 0) { var n = pickName(region.slice(0, li)); if (n) s.cand = n; lockSlot(s); return; }
+      var region = cur.slice(s.armedAt, end);
+      var lm = firstMatch(tokens(region.toLowerCase()), pats(s.lock), 0);
+      if (lm) {
+        var n = pickName(region.slice(0, lm.s)); if (n) s.cand = n;
+        if (s.cand) { lockSlot(s); return; }
+        // lock word but no name caught (noise): keep listening so you can ask again
+        s.armedAt += lm.e; log(); return;
+      }
       var n2 = pickName(region);
       if (n2 && n2 !== s.cand) {
         s.cand = n2; onCand(s);
@@ -1221,8 +1279,13 @@
     $("nameWarn").style.display = (cfg.nameMode && !nl.length) ? "" : "none";
     var yp = $("youPreview"); yp.innerHTML = ""; yp.appendChild(el("b",null,"YOU"));
     yp.appendChild(document.createTextNode(YOU_POEM.replace(/\[NAME\]/g, val("placeholder"))));
-    document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock"); });
-    document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = cfg.meLock || "nice"; });
+    document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock").split(",")[0].trim(); });
+    document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = (cfg.meLock || "right on").split(",")[0].trim(); });
+    $("sensNote").innerHTML = {
+      exact: "Phrases must be heard exactly. Fewest false triggers; best in a quiet room.",
+      normal: "Small slips in long words are OK (“interestin” still counts). Names that are real first names are preferred over other words.",
+      noisy: "For loud rooms. Allows one missed word in longer phrases and bigger slips. Only takes something that sounds like a real name, so background chatter isn't grabbed. If it hears your lock word before a name, it keeps listening so you can ask again."
+    }[cfg.sensitivity || "normal"];
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
     $("pv-entry").textContent = entryDate() + " - " + entryText("Kate", "Alina");
     $("startNote").innerHTML = cfg.startMode === "tap"
@@ -1406,6 +1469,7 @@
   }
   ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
   $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
+  $("sensSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.sensitivity = b.dataset.v; setSeg("sensSeg", cfg.sensitivity); saveCfg(); renderPreviews(); });
   $("startSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.startMode = b.dataset.v; setSeg("startSeg", cfg.startMode); saveCfg(); renderPreviews(); });
   $("fmtSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.maybeFormat = b.dataset.v; setSeg("fmtSeg", cfg.maybeFormat); saveCfg(); renderPreviews(); });
   $("autoOn").addEventListener("change", function(){ cfg.timeout = $("autoOn").checked ? (lastTimeout || 8) : 0; saveCfg(); renderSteppers(); });
@@ -1433,6 +1497,7 @@
     $("f-lang").value = cfg.lang;
     setSeg("fmtSeg", cfg.maybeFormat);
     setSeg("startSeg", cfg.startMode);
+    setSeg("sensSeg", cfg.sensitivity || "normal");
     renderPerms();
     if (cfg.timeout > 0) lastTimeout = cfg.timeout;
     renderSteppers();
@@ -1450,7 +1515,7 @@
     if (!$("sum-listen")) return;
     var k = src();
     $("sum-note").textContent = (k === "you" ? "YOU poem" : k === "text" ? "My text" + (noteTitle() ? " · " + q(noteTitle()) : "") : "Photo" + (noteTitle() ? " · " + q(noteTitle()) : ""));
-    $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger")) + " → " + q(val("lock"));
+    $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger").split(",")[0].trim()) + " → " + q(val("lock").split(",")[0].trim()) + (cfg.sensitivity === "noisy" ? " · noisy room" : cfg.sensitivity === "exact" ? " · exact" : "");
     $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + " · " + cfg.maybeList.length + " other entr" + (cfg.maybeList.length === 1 ? "y" : "ies") + " · prediction " + entryDate() + (cfg.liveDaysBefore < 0 ? " (future)" : "");
     $("sum-name").textContent = cfg.nameMode ? "On · name goes in the poem" : "Off · name goes in the list";
     $("sum-look").textContent = val("homeTitle") + " · poem note " + (cfg.poemDays === 0 ? "today " + fmtTime(poemDate()) : dayLabel(cfg.poemDays)) + " · " + cfg.homeNotes.length + " other notes";
