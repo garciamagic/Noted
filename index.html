@@ -387,8 +387,11 @@
           <p class="sub">Say a trigger and it listens for a first name. Say the lock word after they answer.</p>
           <label class="fld"><span>Trigger for the person they think of</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <label class="fld"><span>Lock word after that name</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="fld"><span>Trigger for their own name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <div class="mode"><span><b>Ask their name too</b><small>Also listen for “What's your name?” so the entry can include their name</small></span><label class="pill"><input type="checkbox" id="f-askName"><span></span></label></div>
+          <div id="meFields">
+            <label class="fld"><span>Trigger for their own name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+            <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          </div>
           <p class="note"><b>Tip:</b> A phrase only has to be part of what you say. You can also list other ways the iPhone might hear it, separated by commas, like <b>right on, write on, alright on</b>. Rehearsal Mode shows exactly what it hears.</p>
           <div class="mode"><span><b>Mic off after each name</b><small>Turns off after “<span class="lk-word">interesting</span>” and after “<span class="mlk-word">nice</span>”. Double-tap or turn face down to listen for the other name.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
         </div>
@@ -416,13 +419,20 @@
         <div class="preview"><small>New entry</small><span id="pv-entry"></span></div>
         <div class="subsec">
           <h4>Entry Style</h4>
-          <div class="seg" id="fmtSeg"><button data-v="sentence">Sentence</button><button data-v="name">Name only</button></div>
           <div id="fmtSentence">
             <label class="fld"><span>Sentence ({me} = their name, {them} = the person)</span><input class="inp" id="f-maybeTemplate" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-            <p class="note">Ask their name any time: before, during, or after the poem. It always goes first in the sentence. If their name is missed, the entry uses the Name only style.</p>
+            <p class="note">Used when “Ask their name too” is on (Listening). Ask any time, in any order. Their name always goes first.</p>
           </div>
-          <div id="fmtName">
-            <label class="fld"><span>Word before the name (blank = none)</span><input class="inp" id="f-maybePrefix" autocomplete="off"></label>
+          <label class="fld"><span id="prefixLabel">Word before the name (blank = none)</span><input class="inp" id="f-maybePrefix" autocomplete="off"></label>
+        </div>
+        <div class="subsec mode-card" id="unsureCard">
+          <div class="mc-head"><h4>Sound Unsure</h4><label class="pill"><input type="checkbox" id="f-unsure"><span></span></label></div>
+          <p class="sub" style="margin:6px 0 0">Adds a near-miss next to the real name, like “Maybe John or Jonny” or “Maybe Cat or Kate”.</p>
+          <div class="mc-body">
+            <label class="fld"><span>Real name goes</span></label>
+            <div class="seg" id="unsureSeg"><button data-v="first">First</button><button data-v="second">Second</button><button data-v="mix">Mix it up</button></div>
+            <label class="fld"><span>Word between the names</span><input class="inp" id="f-unsureJoin" autocomplete="off" autocapitalize="off"></label>
+            <p class="note">The near-miss is a nickname or a different name that sounds close (Kate → Cat, Diana → Diane, Xavier → Javier). Names that sound the same (Sarah/Sara) are never paired. If there's no good near-miss, only the real name is shown. “Mix it up” picks the order by the name.</p>
           </div>
         </div>
         <div class="subsec">
@@ -528,7 +538,7 @@
     <ol class="steps">
       <li><b>Open the poem.</b> Tap the poem note, then <b>double-tap</b> anywhere on the poem to start listening (the orange dot appears at the top). Hand them the phone: “This is a poem I wrote for a friend. Read it out loud.”</li>
       <li><b>Halfway, stop them.</b> Ask: <span class="say">“Does this remind you of anyone?”</span> Then: “Who?” They say a name, and you say <span class="say" id="g-lock">“Interesting.”</span> The mic turns off.</li>
-      <li><b>Get their name, any time.</b> In Sentence format, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Before, during, or after the poem, in either order. The mic turns off after each name, so double-tap (or turn the phone face down) before asking for the other one.</li>
+      <li><b>Get their name, any time.</b> If “Ask their name too” is on, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Before, during, or after the poem, in either order. The mic turns off after each name, so double-tap (or turn the phone face down) before asking for the other one.</li>
       <li><b>They finish the poem.</b> It ends with “you”.</li>
       <li><b>Show the list.</b> Scroll down past the poem to the list. The newest entry has the name.</li>
     </ol>
@@ -576,7 +586,7 @@
       {title:"Groceries", preview:"Eggs, oat milk, coffee, limes", days:17, time:"18:22"},
       {title:"Gift ideas", preview:"Candle, the book she mentioned", days:24, time:"21:03"}
     ],
-    lang:"en-US", debug:false, sensitivity:"normal", startMode:"tap"
+    lang:"en-US", debug:false, sensitivity:"normal", unsure:false, unsureOrder:"mix", unsureJoin:"or", startMode:"tap"
   };
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   var cfg = clone(DEFAULTS);
@@ -756,7 +766,57 @@
     renderMaybe();
   }
   function sortedMaybe(){ return cfg.maybeList.slice().sort(function(a,b){ return (a.d||0) - (b.d||0); }); }
+  /* ---------- "Sound unsure": a near-miss version of a name ---------- */
+  var NEAR = {john:"Jonny",jon:"Jonny",johnny:"Jon",jonathan:"Jonny",kate:"Cat",katie:"Kate",katy:"Kate",cat:"Kate",kat:"Kate",
+    sarah:"Sadie",sara:"Sadie",jess:"Jessie",jessie:"Jess",jessica:"Jessie",alina:"Alana",mike:"Mikey",michael:"Mike",
+    chris:"Christian",kris:"Kristen",steven:"Stefan",stephen:"Stefan",steve:"Stevie",matt:"Matthew",matthew:"Matt",
+    katherine:"Kathleen",kathryn:"Kathleen",catherine:"Caroline",anne:"Annie",ann:"Annie",annie:"Ann",jen:"Jenny",jenny:"Jen",
+    jennifer:"Jenny",liz:"Lizzie",elizabeth:"Liz",beth:"Bethany",tom:"Tommy",tommy:"Tom",thomas:"Tom",dan:"Danny",danny:"Dan",
+    daniel:"Danny",sam:"Sammy",samantha:"Sam",alex:"Alexa",alexander:"Alex",alexandra:"Alex",nick:"Nicky",nicholas:"Nick",
+    nicole:"Nicky",ben:"Benny",benjamin:"Ben",rob:"Robbie",robert:"Rob",bob:"Bobby",will:"Billy",william:"Will",bill:"Billy",
+    jim:"Jimmy",james:"Jamie",jamie:"James",joe:"Joey",joseph:"Joe",josh:"Joshua",megan:"Morgan",ashley:"Ashlyn",emily:"Emma",
+    emma:"Emily",lily:"Lila",abby:"Abigail",abigail:"Abby",gabby:"Gabriella",madison:"Maddie",maddie:"Madison",zach:"Zachary",
+    zachary:"Zach",jake:"Jacob",jacob:"Jake",nate:"Nathan",nathan:"Nate",andy:"Andrew",andrew:"Drew",drew:"Andrew",
+    rachel:"Raquel",leah:"Lena",hannah:"Anna",anna:"Hannah",mia:"Maya",maya:"Mia",sophia:"Sophie",sofia:"Sophie",chloe:"Cleo",
+    zoe:"Zara",isabel:"Isla",olivia:"Liv",grace:"Gracie",luke:"Luka",derek:"Derrick",eric:"Erica",erik:"Erica",mark:"Marco",
+    marc:"Marco",carl:"Carla",karl:"Carla",sean:"Shane",shawn:"Shane",jeff:"Jeffrey",phil:"Philip",tracy:"Stacy",kelly:"Kelsey"};
+  var FAMILY = {mom:1,mommy:1,mama:1,dad:1,daddy:1,papa:1,grandma:1,grandpa:1,granny:1,nana:1,gramps:1,grammy:1,wife:1,husband:1,
+    brother:1,sister:1,son:1,daughter:1,aunt:1,uncle:1,cousin:1,boyfriend:1,girlfriend:1,fiance:1,babe:1};
+  // rough "how it sounds" key, so pairs that sound the same (Sarah/Sara, Jon/John, Katie/Katy) are skipped
+  function soundKey(w){
+    w = w.toLowerCase().replace(/[^a-z]/g,"");
+    w = w.replace(/ph/g,"f").replace(/v/g,"f").replace(/c(?=[eiy])/g,"s").replace(/ck/g,"k").replace(/[cq]/g,"k").replace(/^x/,"z");
+    w = w.charAt(0) + w.slice(1).replace(/h/g,"");
+    w = w.replace(/y/g,"i").replace(/(ie|ee|ey|ea)$/,"i").replace(/([aeiou])e$/,"$1i").replace(/([^aeiou])e$/,"$1");
+    w = w.replace(/ae|ea/g,"e").replace(/([a-z])\1+/g,"$1");
+    return w;
+  }
+  function tooClose(a, b){ return soundKey(a) === soundKey(b); }
+  function nearMiss(name){
+    var lo = name.toLowerCase(), cap = function(x){ return x.charAt(0).toUpperCase() + x.slice(1); };
+    if (FAMILY[lo]) return "";
+    if (NEAR[lo]) return NEAR[lo];   // hand-picked pairs
+    // a real name that sounds close but different (Brenda → Brendan, Diana → Diane, Xavier → Javier)
+    var close = Object.keys(NAMES).filter(function(n){
+      if (FAMILY[n] || n === lo || n.length < 3 || Math.abs(n.length - lo.length) > 2 || tooClose(n, lo)) return false;
+      var sameStart = n[0] === lo[0] || (/^[ck]/.test(n) && /^[ck]/.test(lo)) || (/^[xjh]/.test(n) && /^[xjh]/.test(lo));
+      return sameStart && lev(n, lo) <= (lo.length >= 5 ? 2 : 1);
+    });
+    if (!close.length) return "";
+    close.sort(function(a,b){ return lev(a,lo) - lev(b,lo) || a.localeCompare(b); });
+    var best = close.filter(function(n){ return lev(n,lo) === lev(close[0],lo); });
+    return cap(best[hashStr(lo) % best.length]);
+  }
+  function hashStr(t){ var h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return Math.abs(h); }
+  function unsureName(them){
+    if (!cfg.unsure || !them) return them;
+    var alt = nearMiss(them); if (!alt) return them;
+    var realFirst = cfg.unsureOrder === "first" || (cfg.unsureOrder === "mix" && hashStr(them) % 2 === 0);
+    var j = " " + ((cfg.unsureJoin || "or").trim() || "or") + " ";
+    return realFirst ? them + j + alt : alt + j + them;
+  }
   function entryText(them, me){
+    them = unsureName(them);
     if (cfg.maybeFormat === "sentence" && me) return val("maybeTemplate").replace(/\{me\}/g, me).replace(/\{them\}/g, them);
     var p = (cfg.maybePrefix||"").trim();
     return (p ? p + " " : "") + them;
@@ -788,7 +848,7 @@
   function clean(s){ return (s||"").replace(/[’‘']/g,"").replace(/\bwhat is\b/gi,"whats").replace(/\b(any|some|every) (one|body)\b/gi,"$1$2").replace(/[^A-Za-z0-9\u00c0-\u024f\s]/g," ").replace(/\s+/g," "); }
   function phrase(p){ return clean(p).toLowerCase().trim(); }
   // common first names (and family words) — in noisy rooms these are preferred over random words
-  var NAMES = {}; "aaron abby abigail adam addison adrian aiden aimee alan alana albert alex alexa alexander alexandra alexis alfred ali alice alicia alina alisha alison allie allison alyssa amanda amber amelia amy ana andre andrea andrew andy angel angela angelica angie anita ann anna annabelle anne annie anthony antonio april aria ariana ariel arnold arthur ashley aubrey audrey austin ava avery barbara barry beau becca becky bella ben benjamin bernard beth bethany betty beverly bianca bill billy blake bob bobby bonnie brad bradley brady brandon brenda brendan brent brett brian briana bridget brittany brooke brooklyn bruce bryan bryce caleb cameron camila candace cara carl carla carlos carly carmen carol caroline carolyn carrie carson carter casey cassie cat catherine cathy charles charlie charlotte chase chelsea cheryl chloe chris christian christina christine christopher cindy claire clara clark claudia clay clint cody colby cole colin colleen connie connor corey courtney craig crystal curtis cynthia daisy dakota dale dallas dan dana daniel daniela danielle danny darla darren dave david dawn dean deb debbie deborah delaney denise dennis derek desiree destiny devin diana diane dianne dominic don donald donna doris dorothy doug douglas drew dustin dylan earl ed eddie edgar edward elaine eleanor eli elijah elizabeth ella ellen ellie emily emma eric erica erik erin ethan eva evan evelyn faith felicia fernando frances frank frankie fred gabby gabriel gabriella gail gary gavin gene george georgia gerald gina glen glenn gloria grace grant greg gregory gwen hailey haley hank hannah harold harper harry hayden hazel heather heidi helen henry holly hope howard hunter ian isaac isabel isabella isaiah ivan jack jackie jackson jacob jacqueline jade jaden jake james jamie jan jane janet janice jared jasmine jason jay jayden jean jeff jeffrey jen jenna jennifer jenny jeremy jerry jesse jessica jess jessie jill jim jimmy jo joan joanna joe joel joey john johnny jon jonathan jordan jose joseph josh joshua joy joyce juan judy julia julian julie justin kaitlyn kara karen kari kate katelyn katherine kathleen kathryn kathy katie kay kayla keith kelly kelsey ken kendall kenneth kenny kevin kim kimberly kristen kristin kristy kyle laura lauren layla leah lee leo leon leslie liam lily linda lindsay lindsey lisa liz logan lori lorraine louis lucas lucy luis luke lydia lynn mackenzie madeline madison maggie mandy marco margaret maria mariah marie marilyn mario marissa mark marsha martha martin marvin mary mason matt matthew maureen max maya megan meghan melanie melissa mia michael michele michelle miguel mike mila miles mindy miranda missy molly monica morgan nancy naomi natalie nate nathan nicholas nick nicole nina noah nora olivia oliver omar owen paige pam pamela pat patricia patrick paul paula peggy penny peter phil philip phillip phyllis rachel ralph randy ray raymond rebecca reese regina renee rex rhonda ricardo rich richard rick ricky riley rita rob robert roberta robin rocky rodney roger ron ronald ronnie rosa rose ross roy ruby russell ruth ryan sabrina sadie sally sam samantha samuel sandra sandy sara sarah savannah scarlett scott sean selena seth shane shannon sharon shawn sheila shelby shelly sherry shirley sierra simon sofia sophia sophie stacy stella stephanie stephen steve steven sue summer susan suzanne sydney tammy tanya tara taylor ted teresa terri terry tessa theresa thomas tiffany tim timothy tina todd tom tommy tony tracy travis trevor troy tyler valerie vanessa vera veronica vicki vickie victor victoria vince vincent violet virginia walter wanda warren wayne wendy wesley whitney will william willie wyatt xavier yolanda yvonne zach zachary zoe zoey mom mommy mama dad daddy papa grandma grandpa granny nana gramps grammy wife husband brother sister son daughter aunt uncle cousin boyfriend girlfriend fiance babe".split(" ").forEach(function(n){ NAMES[n] = 1; });
+  var NAMES = {}; "javier marco luka stefan raquel cleo zara isla lena alana kathleen sadie aaron abby abigail adam addison adrian aiden aimee alan alana albert alex alexa alexander alexandra alexis alfred ali alice alicia alina alisha alison allie allison alyssa amanda amber amelia amy ana andre andrea andrew andy angel angela angelica angie anita ann anna annabelle anne annie anthony antonio april aria ariana ariel arnold arthur ashley aubrey audrey austin ava avery barbara barry beau becca becky bella ben benjamin bernard beth bethany betty beverly bianca bill billy blake bob bobby bonnie brad bradley brady brandon brenda brendan brent brett brian briana bridget brittany brooke brooklyn bruce bryan bryce caleb cameron camila candace cara carl carla carlos carly carmen carol caroline carolyn carrie carson carter casey cassie cat catherine cathy charles charlie charlotte chase chelsea cheryl chloe chris christian christina christine christopher cindy claire clara clark claudia clay clint cody colby cole colin colleen connie connor corey courtney craig crystal curtis cynthia daisy dakota dale dallas dan dana daniel daniela danielle danny darla darren dave david dawn dean deb debbie deborah delaney denise dennis derek desiree destiny devin diana diane dianne dominic don donald donna doris dorothy doug douglas drew dustin dylan earl ed eddie edgar edward elaine eleanor eli elijah elizabeth ella ellen ellie emily emma eric erica erik erin ethan eva evan evelyn faith felicia fernando frances frank frankie fred gabby gabriel gabriella gail gary gavin gene george georgia gerald gina glen glenn gloria grace grant greg gregory gwen hailey haley hank hannah harold harper harry hayden hazel heather heidi helen henry holly hope howard hunter ian isaac isabel isabella isaiah ivan jack jackie jackson jacob jacqueline jade jaden jake james jamie jan jane janet janice jared jasmine jason jay jayden jean jeff jeffrey jen jenna jennifer jenny jeremy jerry jesse jessica jess jessie jill jim jimmy jo joan joanna joe joel joey john johnny jon jonathan jordan jose joseph josh joshua joy joyce juan judy julia julian julie justin kaitlyn kara karen kari kate katelyn katherine kathleen kathryn kathy katie kay kayla keith kelly kelsey ken kendall kenneth kenny kevin kim kimberly kristen kristin kristy kyle laura lauren layla leah lee leo leon leslie liam lily linda lindsay lindsey lisa liz logan lori lorraine louis lucas lucy luis luke lydia lynn mackenzie madeline madison maggie mandy marco margaret maria mariah marie marilyn mario marissa mark marsha martha martin marvin mary mason matt matthew maureen max maya megan meghan melanie melissa mia michael michele michelle miguel mike mila miles mindy miranda missy molly monica morgan nancy naomi natalie nate nathan nicholas nick nicole nina noah nora olivia oliver omar owen paige pam pamela pat patricia patrick paul paula peggy penny peter phil philip phillip phyllis rachel ralph randy ray raymond rebecca reese regina renee rex rhonda ricardo rich richard rick ricky riley rita rob robert roberta robin rocky rodney roger ron ronald ronnie rosa rose ross roy ruby russell ruth ryan sabrina sadie sally sam samantha samuel sandra sandy sara sarah savannah scarlett scott sean selena seth shane shannon sharon shawn sheila shelby shelly sherry shirley sierra simon sofia sophia sophie stacy stella stephanie stephen steve steven sue summer susan suzanne sydney tammy tanya tara taylor ted teresa terri terry tessa theresa thomas tiffany tim timothy tina todd tom tommy tony tracy travis trevor troy tyler valerie vanessa vera veronica vicki vickie victor victoria vince vincent violet virginia walter wanda warren wayne wendy wesley whitney will william willie wyatt xavier yolanda yvonne zach zachary zoe zoey mom mommy mama dad daddy papa grandma grandpa granny nana gramps grammy wife husband brother sister son daughter aunt uncle cousin boyfriend girlfriend fiance babe".split(" ").forEach(function(n){ NAMES[n] = 1; });
   function stopSet(){
     var s = {}; BASESTOP.forEach(function(w){ s[w]=1; });
     [val("trigger"),val("lock"),val("meTrigger"),cfg.meLock].forEach(function(p){ phrase((p||"").replace(/,/g," ")).split(" ").forEach(function(w){ if(w) s[w]=1; }); });
@@ -1292,8 +1352,11 @@
       ? "Double-tap anywhere on the note to turn the mic on, and again to turn it off if it ever stays on. The small orange dot at the top of the screen tells you it's on. In Name Mode, double-tapping after the reveal starts the list backup."
       : "Starts as soon as you tap the poem note on the Notes list.";
     renderPerms();
-    $("fmtSentence").style.display = cfg.maybeFormat === "sentence" ? "" : "none";
-    $("fmtName").style.display = cfg.maybeFormat === "name" ? "" : "none";
+    var asking = cfg.maybeFormat === "sentence";
+    $("fmtSentence").style.display = asking ? "" : "none";
+    $("meFields").style.display = asking ? "" : "none";
+    $("prefixLabel").textContent = asking ? "Word before the name (if their name is missed; blank = none)" : "Word before the name (blank = none)";
+    $("unsureCard").classList.toggle("open", !!cfg.unsure);
     $("nameCard").classList.toggle("open", !!cfg.nameMode);
     $("backupRows").style.display = cfg.maybeOn ? "" : "none";
     $("adRow").style.display = cfg.readSwitch ? "" : "none";
@@ -1471,7 +1534,10 @@
   $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
   $("sensSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.sensitivity = b.dataset.v; setSeg("sensSeg", cfg.sensitivity); saveCfg(); renderPreviews(); });
   $("startSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.startMode = b.dataset.v; setSeg("startSeg", cfg.startMode); saveCfg(); renderPreviews(); });
-  $("fmtSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.maybeFormat = b.dataset.v; setSeg("fmtSeg", cfg.maybeFormat); saveCfg(); renderPreviews(); });
+  $("f-askName").addEventListener("change", function(){ cfg.maybeFormat = $("f-askName").checked ? "sentence" : "name"; saveCfg(); renderPreviews(); });
+  $("f-unsure").addEventListener("change", function(){ cfg.unsure = $("f-unsure").checked; saveCfg(); renderPreviews(); });
+  $("unsureSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.unsureOrder = b.dataset.v; setSeg("unsureSeg", cfg.unsureOrder); saveCfg(); renderPreviews(); });
+  $("f-unsureJoin").addEventListener("input", function(){ cfg.unsureJoin = $("f-unsureJoin").value; saveCfg(); renderPreviews(); });
   $("autoOn").addEventListener("change", function(){ cfg.timeout = $("autoOn").checked ? (lastTimeout || 8) : 0; saveCfg(); renderSteppers(); });
   stepper("toMinus","toPlus", function(){ return cfg.timeout || lastTimeout; }, function(v){ cfg.timeout = v; lastTimeout = v; }, 2, 30);
   stepper("adMinus","adPlus", function(){ return cfg.autoDelay; }, function(v){ cfg.autoDelay = v; }, 0, 30);
@@ -1495,7 +1561,10 @@
     renderNoteSettings();
     ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
-    setSeg("fmtSeg", cfg.maybeFormat);
+    $("f-askName").checked = cfg.maybeFormat === "sentence";
+    $("f-unsure").checked = !!cfg.unsure;
+    setSeg("unsureSeg", cfg.unsureOrder || "mix");
+    $("f-unsureJoin").value = cfg.unsureJoin || "or";
     setSeg("startSeg", cfg.startMode);
     setSeg("sensSeg", cfg.sensitivity || "normal");
     renderPerms();
@@ -1516,7 +1585,7 @@
     var k = src();
     $("sum-note").textContent = (k === "you" ? "YOU poem" : k === "text" ? "My text" + (noteTitle() ? " · " + q(noteTitle()) : "") : "Photo" + (noteTitle() ? " · " + q(noteTitle()) : ""));
     $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger").split(",")[0].trim()) + " → " + q(val("lock").split(",")[0].trim()) + (cfg.sensitivity === "noisy" ? " · noisy room" : cfg.sensitivity === "exact" ? " · exact" : "");
-    $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + " · " + cfg.maybeList.length + " other entr" + (cfg.maybeList.length === 1 ? "y" : "ies") + " · prediction " + entryDate() + (cfg.liveDaysBefore < 0 ? " (future)" : "");
+    $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + (cfg.unsure ? " · unsure" : "") + " · " + cfg.maybeList.length + " other entr" + (cfg.maybeList.length === 1 ? "y" : "ies") + " · prediction " + entryDate() + (cfg.liveDaysBefore < 0 ? " (future)" : "");
     $("sum-name").textContent = cfg.nameMode ? "On · name goes in the poem" : "Off · name goes in the list";
     $("sum-look").textContent = val("homeTitle") + " · poem note " + (cfg.poemDays === 0 ? "today " + fmtTime(poemDate()) : dayLabel(cfg.poemDays)) + " · " + cfg.homeNotes.length + " other notes";
     var langEl = $("f-lang"), langName = langEl.options[langEl.selectedIndex] ? langEl.options[langEl.selectedIndex].text : cfg.lang;
