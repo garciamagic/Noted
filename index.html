@@ -345,7 +345,6 @@
       <p class="sub">Allow these first, so no pop-up appears in front of anyone. If you fully close Noted, allow them again.</p>
       <div class="mode"><span><b>Microphone</b><small id="micStatus">Not allowed yet</small></span><span id="micSlot"><button class="gbtn blue" id="allowMic">Allow</button></span></div>
       <div class="mode" id="motionRow"><span><b>Motion</b><small id="motionStatus">For face-down start</small></span><span id="motionSlot"><button class="gbtn blue" id="allowMotion">Allow</button></span></div>
-      <div class="mode"><span><b>Rehearsal Mode</b><small>Shows what it hears at the top. Turn off before you perform.</small></span><label class="pill"><input type="checkbox" id="f-debug"><span></span></label></div>
     </div>
 
     <!-- ===== THE NOTE ===== -->
@@ -441,8 +440,7 @@
       <div class="group-body">
         <div class="subsec">
           <h4>Turning the mic on</h4>
-          <div class="seg" id="startSeg"><button data-v="tap">Double-tap the note</button><button data-v="open">When it opens</button></div>
-          <p class="note" id="startNote"></p>
+          <p class="note" id="startNote" style="margin-top:0">Double-tap anywhere on the note to turn the mic on, and again to turn it off. The orange dot at the top of the screen means it's on.</p>
           <div class="mode"><span><b>Face down also starts it</b><small>Turn the phone face down to start the mic</small></span><label class="pill"><input type="checkbox" id="f-flipOn"><span></span></label></div>
         </div>
 
@@ -476,7 +474,7 @@
 
         <div class="subsec">
           <h4>Loud rooms</h4>
-          <div class="seg" id="sensSeg"><button data-v="exact">Exact</button><button data-v="normal">Normal</button><button data-v="noisy">Noisy room</button></div>
+          <div class="seg" id="sensSeg"><button data-v="normal">Normal</button><button data-v="noisy">Noisy room</button></div>
           <p class="note" id="sensNote"></p>
         </div>
       </div>
@@ -557,7 +555,7 @@
       <li><b>Put it on your home screen.</b> Upload the Noted folder to your host (the same way as OneLock), open the link in Safari, then tap Share → <b>Add to Home Screen</b>. It shows up as “Noted”.</li>
       <li><b>Open Settings.</b> Tap the <b>•••</b> button at the top right, on the Notes list or the poem. Set your phrases and your notes list.</li>
       <li><b>Allow permissions.</b> In Settings → <b>Permissions</b>, tap <b>Allow</b> for Microphone, and for Motion if you use face-down restart. Do this again any time you've fully closed Noted.</li>
-      <li><b>Rehearse.</b> Turn on Rehearsal Mode and run the routine out loud a few times. Turn it off when you're done.</li>
+      <li><b>Rehearse.</b> Run the routine out loud a few times. Watch for the orange dot to come on after your double-tap and go off after the lock word.</li>
     </ol>
 
     <h2 class="part">Part 2: Performing</h2>
@@ -609,7 +607,7 @@
       {text:"Sarah will think Alina - NO"},{text:"Susan - YES"},{text:"Their Father, Joe or Joseph - YES"},
       {text:"Maybe Alex - YES"},{text:"Something like Mark - NO"},{text:"Owen"},{text:"Steve or Steven"}],
     livePos:9, youLength:"short",
-    homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"scribble", customTitle:"", customText:"", photoTitle:"", poemDays:0, poemTime:"20:18",
+    homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"scribble", customTitle:"", customText:"", photoTitle:"", poemDays:3, poemTime:"20:18",
     homeNotes:[
       {title:"Dinner ideas", preview:"Tacos, salmon, that pasta from Sunday", days:0, time:"16:50"},
       {title:"Call back", preview:"Dentist about Thursday", days:2, time:"14:12"},
@@ -624,6 +622,9 @@
   var cfg = clone(DEFAULTS);
   try { Object.assign(cfg, JSON.parse(localStorage.getItem("youPoemCfg4") || "{}")); } catch(e){}
   if (!Array.isArray(cfg.homeNotes)) cfg.homeNotes = clone(DEFAULTS.homeNotes);
+  cfg.debug = false; cfg.startMode = "tap";
+  if (cfg.sensitivity === "exact") cfg.sensitivity = "normal";
+  if (cfg.poemDays === 0 && cfg.poemTime === "20:18") cfg.poemDays = 3;   // old default was "today": make it earlier in the week
   // swap the old example notes for the new generic ones (only if you never changed them)
   if (cfg.homeNotes.map(function(n){ return n.title; }).join("|") ===
       "Maybe I could hold your hand Even...|Mercedes GT43 AMG|Hi I’m Danny and I’m a...magician|Arnazon|Groceries|Gift ideas")
@@ -1346,7 +1347,6 @@
     document.body.classList.add("in-poem");
     window.scrollTo(0,0);
     poemOpen = true; armed = false;
-    if (cfg.startMode === "open") arm();
   }
   function arm(){
     askMotion();          // inside a tap, so iPhone allows it
@@ -1516,16 +1516,12 @@
     document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = (cfg.meLock || "right on").split(",")[0].trim(); });
     document.querySelectorAll(".mlk-wrap").forEach(function(s){ s.style.display = cfg.maybeFormat === "sentence" ? "" : "none"; });
     $("sensNote").innerHTML = {
-      exact: "Phrases must be heard exactly. Fewest false triggers; best in a quiet room.",
       normal: "Small slips in long words are OK (“interestin” still counts). Names that are real first names are preferred over other words.",
       noisy: "For loud rooms. Allows one missed word in longer phrases and bigger slips. Only takes something that sounds like a real name, so background chatter isn't grabbed. If it hears your lock word before a name, it keeps listening so you can ask again."
     }[cfg.sensitivity || "normal"];
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
     $("pv-entry").textContent = entryText("Kate", "Alina");
     setSeg("lenSeg", cfg.youLength || "short");
-    $("startNote").innerHTML = cfg.startMode === "tap"
-      ? "Double-tap anywhere on the note to turn the mic on, and again to turn it off. The orange dot at the top of the screen means it's on."
-      : "Starts as soon as you tap the poem note on the Notes list.";
     renderPerms();
     var asking = cfg.maybeFormat === "sentence";
     $("fmtSentence").style.display = asking ? "" : "none";
@@ -1752,10 +1748,9 @@
     else th.appendChild(el("span","ph-empty","No photo"));
     $("photoRemove").style.display = photoURL ? "" : "none";
   }
-  ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock","keepPredictions"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
+  ["maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock","keepPredictions"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
   $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
   $("sensSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.sensitivity = b.dataset.v; setSeg("sensSeg", cfg.sensitivity); saveCfg(); renderPreviews(); });
-  $("startSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.startMode = b.dataset.v; setSeg("startSeg", cfg.startMode); saveCfg(); renderPreviews(); });
   $("f-askName").addEventListener("change", function(){ cfg.maybeFormat = $("f-askName").checked ? "sentence" : "name"; saveCfg(); renderPreviews(); });
   $("f-unsure").addEventListener("change", function(){ cfg.unsure = $("f-unsure").checked; saveCfg(); renderPreviews(); });
   $("unsureSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.unsureOrder = b.dataset.v; setSeg("unsureSeg", cfg.unsureOrder); saveCfg(); renderPreviews(); });
@@ -1780,12 +1775,11 @@
     $("f-customText").value = cfg.customText || "";
     $("f-photoTitle").value = cfg.photoTitle || "";
     renderNoteSettings();
-    ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock","keepPredictions"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
+    ["maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock","keepPredictions"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
     $("f-askName").checked = cfg.maybeFormat === "sentence";
     $("f-unsure").checked = !!cfg.unsure;
     setSeg("unsureSeg", cfg.unsureOrder || "mix");
-    setSeg("startSeg", cfg.startMode);
     setSeg("sensSeg", cfg.sensitivity || "normal");
     renderPerms();
     if (cfg.timeout > 0) lastTimeout = cfg.timeout;
@@ -1804,12 +1798,12 @@
     if (!$("sum-listen")) return;
     var k = src();
     $("sum-note").textContent = (k === "scribble" ? "Scribble" + (cfg.dualOn ? " · dual reality" : "") : k === "you" ? "YOU poem" : k === "text" ? "My text" + (noteTitle() ? " · " + q(noteTitle()) : "") : "Photo" + (noteTitle() ? " · " + q(noteTitle()) : ""));
-    $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger").split(",")[0].trim()) + " → " + q(val("lock").split(",")[0].trim()) + (cfg.sensitivity === "noisy" ? " · noisy room" : cfg.sensitivity === "exact" ? " · exact" : "");
+    $("sum-listen").textContent = q(val("trigger").split(",")[0].trim()) + " → " + q(val("lock").split(",")[0].trim()) + (cfg.sensitivity === "noisy" ? " · noisy room" : cfg.sensitivity === "exact" ? " · exact" : "");
     $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + (cfg.unsure ? " · unsure" : "") + " · " + (cfg.maybeList.length + 1) + " lines · prediction #" + (Math.min(cfg.livePos, cfg.maybeList.length) + 1);
     $("sum-name").textContent = cfg.nameMode ? "On · name goes in the poem" : "Off · name goes in the list";
     $("sum-look").textContent = val("homeTitle") + " · trick note " + (cfg.poemDays === 0 ? "today " + fmtTime(poemDate()) : dayLabel(cfg.poemDays)) + " · " + cfg.homeNotes.length + " other notes";
     var langEl = $("f-lang"), langName = langEl.options[langEl.selectedIndex] ? langEl.options[langEl.selectedIndex].text : cfg.lang;
-    $("sum-other").textContent = "Rehearsal " + (cfg.debug ? "on" : "off") + " · " + langName;
+    $("sum-other").textContent = langName;
   }
 
   /* --- secret entry: tap the ••• button (home screen or poem) --- */
