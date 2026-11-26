@@ -373,8 +373,7 @@
         <div class="subsec" id="srcScribble">
           <h4>Scribble</h4>
           <div class="scrib-prev"><img id="scribPrevA" alt=""><img id="scribPrevB" alt=""></div>
-          <div class="mode"><span><b>Dual reality</b><small>When you turn the phone toward someone else, they see names under the scribble. Turn it back and the names are gone. It only happens once.</small></span><label class="pill"><input type="checkbox" id="f-dualOn"><span></span></label></div>
-          <label class="fld" id="dualNamesWrap"><span>Names under the scribble (up to 3, separated by commas)</span><input class="inp" id="f-dualNames" autocomplete="off"></label>
+          <div class="mode"><span><b>Dual reality</b><small>After you've scrolled down to the prediction list and back up to the scribble, turning the phone toward someone else shows names under it. Turn it back and they're gone. It only happens once.</small></span><label class="pill"><input type="checkbox" id="f-dualOn"><span></span></label></div>
           <p class="note" id="dualNote">Needs <b>Motion</b> allowed (Permissions, at the top). The switch happens while the screen is edge-on during the turn, so nobody on your side sees it change.</p>
         </div>
 
@@ -467,6 +466,7 @@
         <div class="subsec">
           <h4>After the Reveal</h4>
           <p class="note" style="margin-top:0">Tap the end of the prediction line. The keyboard comes up with the cursor at the end, so you can type “ - YES” like a normal note.</p>
+          <div class="mode"><span><b>Keep each prediction</b><small>When you go back to the Notes list, the prediction (and the “ - YES” you typed) stays in the list, and the next one goes below it. The list grows with every performance.</small></span><label class="pill"><input type="checkbox" id="f-keepPredictions"><span></span></label></div>
         </div>
       </div>
     </div>
@@ -617,7 +617,7 @@
       {title:"Groceries", preview:"Eggs, oat milk, coffee, limes", days:17, time:"18:22"},
       {title:"Gift ideas", preview:"Candle, the book she mentioned", days:24, time:"21:03"}
     ],
-    lang:"en-US", debug:false, dualOn:true, dualNames:"Derek, Owen, Patrick", sensitivity:"normal", unsure:false, unsureOrder:"mix", unsureJoin:"or", startMode:"tap"
+    lang:"en-US", debug:false, keepPredictions:true, dualOn:true, dualNames:"Derek, Owen, Patrick", sensitivity:"normal", unsure:false, unsureOrder:"mix", unsureJoin:"or", startMode:"tap"
   };
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   var cfg = clone(DEFAULTS);
@@ -675,8 +675,7 @@
       var W = img.naturalWidth, H = img.naturalHeight, c = document.createElement("canvas");
       c.width = W; c.height = H;
       var g = c.getContext("2d"); g.drawImage(img, 0, 0);
-      var names = (cfg.dualNames || "").split(",").map(function(n){ return n.trim(); }).filter(Boolean).slice(0,3);
-      var xs = names.length === 1 ? [0.5] : names.length === 2 ? [0.3, 0.7] : [0.209, 0.493, 0.781];
+      var names = ["Derek", "Owen", "Patrick"], xs = [0.209, 0.493, 0.781];
       g.fillStyle = "#111"; g.textAlign = "center"; g.textBaseline = "alphabetic";
       g.font = "600 " + Math.round(W * 0.056) + "px -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
       names.forEach(function(n, k){ g.fillText(n, W * xs[k], H * 0.864); });
@@ -691,7 +690,24 @@
   }
 
   /* ---------- Dual reality: which way the screen is facing ---------- */
-  var dualState = "us", dualRef = null, dualDiff = 0;   // us → away (names) → done (names gone, no more switching)
+  // wait → (list seen) → us → away (names) → done (names gone, no more switching)
+  var dualState = "wait", dualRef = null, dualDiff = 0, listSeen = false;
+  var dualObs = ("IntersectionObserver" in window) ? new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (!poemOpen || !dualActive() || dualState !== "wait") return;
+      if (en.target.id === "m-list" && en.isIntersecting) { listSeen = true; log(); }
+      if (en.target.classList.contains("notephoto") && listSeen && en.intersectionRatio >= 0.6) {
+        dualState = "us"; dualRef = null; log();   // back at the scribble: turning is live now
+      }
+    });
+  }, {threshold: [0, 0.6]}) : null;
+  function watchDual(){
+    if (!dualObs) return;
+    dualObs.disconnect();
+    if (!dualActive()) return;
+    var ph = document.querySelector("#noteContent .notephoto"); if (ph) dualObs.observe(ph);
+    dualObs.observe($("m-list"));
+  }
   function dualActive(){ return src() === "scribble" && cfg.dualOn; }
   function screenNormal(e){
     var r = Math.PI/180, a = (e.alpha||0)*r, b = (e.beta||0)*r, g = (e.gamma||0)*r;
@@ -700,7 +716,7 @@
   }
   function angDiff(a, b){ var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
   function dualUpdate(e){
-    if (!poemOpen || !dualActive() || dualState === "done" || e.alpha == null) return;
+    if (!poemOpen || !dualActive() || (dualState !== "us" && dualState !== "away") || e.alpha == null) return;
     var n = screenNormal(e), h = Math.hypot(n.x, n.y);
     if (h < 0.35) return;                      // screen facing up or down: no clear direction (face-down flips are ignored)
     var head = Math.atan2(n.x, n.y) * 180/Math.PI;
@@ -863,6 +879,7 @@
     else box.appendChild(textBlock(noteText()));
     var s1 = slot("them1");
     setNames(s1 && s1.cand ? s1.cand : val("placeholder"));
+    watchDual();
     // watch the last [NAME] so Name Mode knows when it has been read
     lastNameEl = nameEls.length ? nameEls[nameEls.length-1] : null;
     if (readObserver) readObserver.disconnect();
@@ -1317,7 +1334,7 @@
 
   /* ================= NAVIGATION ================= */
   function openPoem(){
-    dualState = "us"; dualRef = null; dualDiff = 0;
+    dualState = "wait"; dualRef = null; dualDiff = 0; listSeen = false;
     resetState();
     renderPoemStatic();
     $("home").classList.remove("on"); $("poem").classList.add("on");
@@ -1385,7 +1402,19 @@
     });
   })();
 
+  // keep the prediction (with anything you typed after it, like " - YES") as a normal line in the list,
+  // so the list grows over performances; the next prediction goes just below it
+  function commitPrediction(){
+    if (!cfg.keepPredictions) return;
+    var lv = $("live"); if (!lv || !slotVal("them2")) return;
+    var text = (lv.textContent || "").replace(/\s+/g," ").trim(); if (!text) return;
+    var at = Math.max(0, Math.min(cfg.maybeList.length, cfg.livePos|0));
+    cfg.maybeList.splice(at, 0, {text:text});
+    cfg.livePos = at + 1;
+    saveCfg();
+  }
   function goHome(){
+    if (poemOpen) commitPrediction();
     poemOpen = false; armed = false; stopMic(); resetState(); closeViewer();
     renderHome();
     $("poem").classList.remove("on"); $("home").classList.add("on");
@@ -1407,7 +1436,7 @@
     d.style.display = "block";
     var ph = {1:"1 poem",1.5:"poem done (flip for list backup)",2:"2 list",3:"done"}[phase];
     var lines = ["phase: " + ph + "   mic: " + (running?"ON":"off") + "   tilt: " + dbg.beta + (dbg.err? "   err: "+dbg.err : "")];
-    if (dualActive()) lines.push("dual: " + dualState + "   turned: " + Math.round(dualDiff) + "°");
+    if (dualActive()) lines.push("dual: " + (dualState === "wait" ? (listSeen ? "scroll back up to the scribble" : "scroll down to the list first") : dualState + "   turned: " + Math.round(dualDiff) + "°"));
     slots.forEach(function(s){ if (s.status !== "idle" || s.cand) lines.push(s.key + ": " + s.status + (s.cand ? " → " + s.cand : "")); });
     lines.push("heard: …" + cur.slice(-140));
     d.textContent = lines.join("\n");
@@ -1681,11 +1710,6 @@
   bindText("f-customText", "customText", renderNoteSettings);
   bindText("f-photoTitle", "photoTitle", renderNoteSettings);
   $("f-dualOn").addEventListener("change", function(){ cfg.dualOn = $("f-dualOn").checked; saveCfg(); renderNoteSettings(); });
-  var dualNamesTimer = null;
-  $("f-dualNames").addEventListener("input", function(){
-    cfg.dualNames = $("f-dualNames").value; saveCfg();
-    clearTimeout(dualNamesTimer); dualNamesTimer = setTimeout(function(){ buildScribbleNames(renderNoteSettings); }, 300);
-  });
   $("srcSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.noteSource = b.dataset.v; saveCfg(); renderNoteSettings(); });
   function renderNoteSettings(){
     setSeg("srcSeg", cfg.noteSource);
@@ -1694,7 +1718,6 @@
     $("srcPhoto").style.display = cfg.noteSource === "photo" ? "" : "none";
     $("srcScribble").style.display = cfg.noteSource === "scribble" ? "" : "none";
     $("f-dualOn").checked = !!cfg.dualOn;
-    $("dualNamesWrap").style.display = cfg.dualOn ? "" : "none";
     $("dualNote").style.display = cfg.dualOn ? "" : "none";
     $("scribPrevA").src = SCRIBBLE;
     $("scribPrevB").style.display = cfg.dualOn ? "" : "none";
@@ -1723,7 +1746,7 @@
     else th.appendChild(el("span","ph-empty","No photo"));
     $("photoRemove").style.display = photoURL ? "" : "none";
   }
-  ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
+  ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock","keepPredictions"].forEach(function(k){ bindCheck("f-"+k, k, renderPreviews); });
   $("f-lang").addEventListener("change", function(){ cfg.lang = $("f-lang").value; saveCfg(); });
   $("sensSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.sensitivity = b.dataset.v; setSeg("sensSeg", cfg.sensitivity); saveCfg(); renderPreviews(); });
   $("startSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.startMode = b.dataset.v; setSeg("startSeg", cfg.startMode); saveCfg(); renderPreviews(); });
@@ -1749,11 +1772,10 @@
   function renderSettings(){
     TEXT.forEach(function(k){ $("f-"+k).value = cfg[k] || ""; });
     $("f-customTitle").value = cfg.customTitle || "";
-    $("f-dualNames").value = cfg.dualNames || "";
     $("f-customText").value = cfg.customText || "";
     $("f-photoTitle").value = cfg.photoTitle || "";
     renderNoteSettings();
-    ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
+    ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock","keepPredictions"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
     $("f-askName").checked = cfg.maybeFormat === "sentence";
     $("f-unsure").checked = !!cfg.unsure;
