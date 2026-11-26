@@ -96,6 +96,9 @@
   .notebody{padding-bottom:calc(env(safe-area-inset-bottom) + 120px)}
   .notephoto{display:block;margin:34px 6px 34px;}
   .notephoto img{display:block;width:100%;height:auto;-webkit-user-drag:none;pointer-events:none}
+  #live[contenteditable]{-webkit-user-select:text;user-select:text;outline:none;caret-color:#e3a700}
+  .fakecaret{display:inline-block;width:2px;height:1.1em;background:#e3a700;vertical-align:-2px;margin-left:1px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
   #viewer{position:fixed;inset:0;z-index:15;background:var(--notebg);display:none;align-items:center;justify-content:center;touch-action:manipulation}
   #viewer.open{display:flex;animation:vIn .22s ease-out}
   @keyframes vIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
@@ -199,6 +202,8 @@
   .ed-ctl{display:flex;flex-direction:column;gap:4px;justify-content:center}
   .ed-ctl button{width:34px;height:30px;border-radius:9px;border:0;background:#44464b;color:#fff;font-size:15px;line-height:1;cursor:pointer;font-family:inherit;padding:0}
   .ed-ctl button.x{color:#ff6961}
+  .seg.sm button{padding:7px 4px;font-size:13px}
+  .seg.sm{flex:1}
   .ed-item.one,.ed-item.sec{align-items:center}
   .ed-item.one .ed-ctl,.ed-item.sec .ed-ctl{flex-direction:row}
   .ed-ctl button:disabled{opacity:.3}
@@ -346,6 +351,7 @@
         </div>
 
         <div class="subsec" id="srcYou">
+          <div class="seg" id="lenSeg" style="margin-bottom:10px"><button data-v="short">Short (4 stanzas)</button><button data-v="full">Full (8 stanzas)</button></div>
           <div class="poembox" id="youPreview"></div>
         </div>
 
@@ -437,10 +443,17 @@
         </div>
         <div class="subsec">
           <h4>Entries</h4>
-          <p class="sub">The list sorts by date, newest first. The blue row is where the prediction lands: change its date to put it anywhere in the list, or after the poem's date to make it a prediction for the future. All dates move with the poem note's date.</p>
+          <p class="sub">Shown in this order, top to bottom. Mark each one YES, NO, or leave it blank. The blue row is where the prediction appears; move it with the arrows.</p>
           <label class="fld"><span>List heading</span><input class="inp" id="f-maybeHeading" autocomplete="off"></label>
           <div class="ed" id="maybeEd"></div>
           <div class="btn-row"><button class="gbtn blue" id="addEntry">+ Add entry</button></div>
+        </div>
+        <div class="subsec">
+          <h4>After the Reveal</h4>
+          <p class="sub">Add “YES” to the prediction in front of them.</p>
+          <div class="seg" id="markSeg"><button data-v="type">Type it myself</button><button data-v="auto">Hold to write it</button></div>
+          <p class="note" id="markNote"></p>
+          <label class="fld" id="markTextWrap"><span>What gets written</span><input class="inp" id="f-markText" autocomplete="off"></label>
         </div>
       </div>
     </div>
@@ -540,7 +553,8 @@
       <li><b>After the first two stanzas, stop them.</b> Ask: <span class="say">“Does this make you think of anyone?”</span> They'll say something like “Yeah” or “It does.” Ask “Who?” They say a name (if they say “my mom” or “my sister”, ask “What's her name?”), and you say <span class="say" id="g-lock">“Interesting.”</span> The mic turns off.</li>
       <li><b>Get their name, any time.</b> If “Ask their name too” is on, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Before, during, or after the poem, in either order. The mic turns off after each name, so double-tap (or turn the phone face down) before asking for the other one.</li>
       <li><b>They finish the poem.</b> It ends with “you”.</li>
-      <li><b>Show the list.</b> Scroll down past the poem to the list. The newest entry has the name.</li>
+      <li><b>Show the list.</b> Scroll down past the poem to the list of past predictions. One of them has the name.</li>
+      <li><b>Mark it.</b> Tap the end of that line and type “ - YES”, like the others (or hold the line, if you chose “Hold to write it”).</li>
     </ol>
 
     <h2 class="part">Part 3: Name Mode</h2>
@@ -576,7 +590,11 @@
     nameMode:false, maybeOn:true, flipOn:true, stopAfterLock:true, readSwitch:true, autoDelay:5, maybeFormat:"name", maybePrefix:"Maybe",
     maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"right on",
     liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
-    maybeList:[{d:74,text:"Alina will think of Kate"},{d:80,text:"Maybe John"},{d:82,text:"Something like Cat or Kate"},{d:95,text:"Alex"}],
+    maybeList:[{text:"Maybe John",result:"yes"},{text:"Cat or a Kate",result:"yes"},{text:"Something like Bill",result:"no"},
+      {text:"Harry",result:"yes"},{text:"Sarah will think Alina",result:"no"},{text:"NO NO NO",result:""},{text:"Susan",result:"yes"},
+      {text:"Their Father, Joe or Joseph",result:"yes"},{text:"Maybe Alex",result:"yes"},{text:"Something like Mark",result:""},
+      {text:"Diana",result:""},{text:"Steve or Steven",result:""}],
+    livePos:10, markMode:"type", markText:" - YES", youLength:"short",
     homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"you", customTitle:"", customText:"", photoTitle:"", poemDays:0, poemTime:"20:18",
     homeNotes:[
       {title:"Maybe I could hold your hand Even...", preview:"say I am. More than night enough", days:0, time:"16:50"},
@@ -594,6 +612,14 @@
   if (!Array.isArray(cfg.homeNotes)) cfg.homeNotes = clone(DEFAULTS.homeNotes);
   if (typeof cfg.autoDelay !== "number") cfg.autoDelay = 5;
   if (!Array.isArray(cfg.maybeList)) cfg.maybeList = clone(DEFAULTS.maybeList);
+  // older versions kept dated entries: switch to the new dateless list (keep your own entries if you changed them)
+  if (cfg.maybeList.length && cfg.maybeList.every(function(e){ return "d" in e && !("result" in e); })) {
+    var oldDefault = ["Alina will think of Kate","Maybe John","Something like Cat or Kate","Alex"];
+    var texts = cfg.maybeList.slice().sort(function(a,b){ return a.d - b.d; }).map(function(e){ return e.text; });
+    cfg.maybeList = texts.join("|") === oldDefault.join("|") ? clone(DEFAULTS.maybeList)
+      : texts.map(function(t){ return {text:t, result:""}; });
+    if (typeof cfg.livePos !== "number") cfg.livePos = 0;
+  }
   if (!/^\d{1,2}:\d{2}$/.test(cfg.poemTime||"")) cfg.poemTime = DEFAULTS.poemTime;
   function maybeActive(){ return !cfg.nameMode || cfg.maybeOn; }
   function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} if (typeof renderSummaries === "function") renderSummaries(); }
@@ -605,7 +631,11 @@
     return "you";
   }
   function noteTitle(){ var k = src(); return k === "you" ? "YOU" : k === "text" ? (cfg.customTitle||"").trim() : (cfg.photoTitle||"").trim(); }
-  function noteText(){ var k = src(); return k === "you" ? YOU_POEM : k === "text" ? cfg.customText : ""; }
+  function youPoem(){
+    if (cfg.youLength !== "short") return YOU_POEM;
+    var st = YOU_POEM.split("\n\n"); return [st[0], st[1], st[6], st[7]].join("\n\n");
+  }
+  function noteText(){ var k = src(); return k === "you" ? youPoem() : k === "text" ? cfg.customText : ""; }
   function notePhoto(){ return src() === "photo" ? photoURL : null; }
 
   /* ================= PHOTO STORAGE ================= */
@@ -765,6 +795,32 @@
     $("m-head").textContent = cfg.maybeHeading;
     renderMaybe();
   }
+  /* ---------- after the reveal: add " - YES" to the prediction ---------- */
+  function caretToEnd(node){
+    try { var r = document.createRange(); r.selectNodeContents(node); r.collapse(false); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch(e){}
+  }
+  function setupLive(lv){
+    if (cfg.markMode === "type") {
+      // type it yourself: tap the line and the keyboard comes up with the cursor at the end, like Notes
+      lv.contentEditable = "true"; lv.spellcheck = false; lv.setAttribute("autocapitalize","characters");
+      lv.addEventListener("focus", function(){ setTimeout(function(){ caretToEnd(lv); }, 0); });
+    } else {
+      // hold the line: it writes the text out for you, letter by letter
+      var t = null, done = false;
+      var startHold = function(){ if (done) return; t = setTimeout(function(){ done = true; typeOut(lv, cfg.markText || " - YES"); }, 600); };
+      var endHold = function(){ clearTimeout(t); };
+      lv.addEventListener("touchstart", startHold, {passive:true}); lv.addEventListener("mousedown", startHold);
+      ["touchend","touchmove","mouseup","mouseleave"].forEach(function(ev){ lv.addEventListener(ev, endHold, {passive:true}); });
+    }
+  }
+  function typeOut(lv, text){
+    var span = el("span"), caret = el("span","fakecaret"); lv.appendChild(span); lv.appendChild(caret);
+    var i = 0;
+    (function next(){
+      if (i < text.length) { span.textContent += text.charAt(i++); setTimeout(next, 90 + Math.random()*110); }
+      else setTimeout(function(){ caret.remove(); }, 1200);
+    })();
+  }
   function sortedMaybe(){ return cfg.maybeList.slice().sort(function(a,b){ return (a.d||0) - (b.d||0); }); }
   /* ---------- "Sound unsure": a near-miss version of a name ---------- */
   var NEAR = {john:"Jonny",jon:"Jonny",johnny:"Jon",jonathan:"Jonny",kate:"Cat",katie:"Kate",katy:"Kate",cat:"Kate",kat:"Kate",
@@ -822,10 +878,11 @@
     return (p ? p + " " : "") + them;
   }
   // all entries, plus the live prediction when there is one, sorted newest date first
+  function resultText(r){ return r === "yes" ? " - YES" : r === "no" ? " - NO" : ""; }
+  // the list in order, with the prediction placed at its chosen spot
   function listRows(withLive){
-    var rows = cfg.maybeList.map(function(e){ return {d:e.d||0, e:e}; });
-    if (withLive) rows.push({d:cfg.liveDaysBefore||0, live:true});
-    rows.sort(function(a,b){ return a.d - b.d || (a.live ? -1 : b.live ? 1 : 0); });
+    var rows = cfg.maybeList.map(function(e){ return {e:e}; });
+    if (withLive) { var at = Math.max(0, Math.min(rows.length, cfg.livePos|0)); rows.splice(at, 0, {live:true}); }
     return rows;
   }
   function renderMaybe(){
@@ -833,8 +890,8 @@
     var them = slotVal("them2"), me = slotVal("me");
     list.innerHTML = "";
     listRows(!!them).forEach(function(r){
-      if (r.live) { var lv = el("div",null, entryDate() + " - " + entryText(them, me)); lv.id = "live"; list.appendChild(lv); }
-      else if (r.e.text && r.e.text.trim()) list.appendChild(el("div",null, mmdd(maybeDate(r.d)) + " - " + r.e.text.trim()));
+      if (r.live) { var lv = el("div",null, entryText(them, me)); lv.id = "live"; setupLive(lv); list.appendChild(lv); }
+      else if (r.e.text && r.e.text.trim()) list.appendChild(el("div",null, r.e.text.trim() + resultText(r.e.result)));
     });
   }
 
@@ -1238,7 +1295,7 @@
     });
     return { moved: function(){ return moved; } };
   }
-  tapper($("poem"), "#back, .gpill, .circ", function(el){ if (el.closest(".notephoto")) openViewer(); });
+  tapper($("poem"), "#back, .gpill, .circ, #live", function(el){ if (el.closest(".notephoto")) openViewer(); });
 
   var viewer = $("viewer"), viewerOpen = false;
   function openViewer(){
@@ -1352,7 +1409,7 @@
     var nl = (noteText() || "").split("\n").filter(function(l){ return /\[name\]/i.test(l); });
     $("nameWarn").style.display = (cfg.nameMode && !nl.length) ? "" : "none";
     var yp = $("youPreview"); yp.innerHTML = ""; yp.appendChild(el("b",null,"YOU"));
-    yp.appendChild(document.createTextNode(YOU_POEM.replace(/\[NAME\]/g, val("placeholder"))));
+    yp.appendChild(document.createTextNode(youPoem().replace(/\[NAME\]/g, val("placeholder"))));
     document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock").split(",")[0].trim(); });
     document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = (cfg.meLock || "right on").split(",")[0].trim(); });
     $("sensNote").innerHTML = {
@@ -1361,7 +1418,12 @@
       noisy: "For loud rooms. Allows one missed word in longer phrases and bigger slips. Only takes something that sounds like a real name, so background chatter isn't grabbed. If it hears your lock word before a name, it keeps listening so you can ask again."
     }[cfg.sensitivity || "normal"];
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
-    $("pv-entry").textContent = entryDate() + " - " + entryText("Kate", "Alina");
+    $("pv-entry").textContent = entryText("Kate", "Alina");
+    setSeg("markSeg", cfg.markMode); setSeg("lenSeg", cfg.youLength || "short");
+    $("markNote").textContent = cfg.markMode === "type"
+      ? "Tap the end of the prediction line. The keyboard comes up with the cursor at the end, so you can type “ - YES” like a normal note."
+      : "Hold your finger on the prediction line for a moment. The text writes itself out, letter by letter.";
+    $("markTextWrap").style.display = cfg.markMode === "auto" ? "" : "none";
     $("startNote").innerHTML = cfg.startMode === "tap"
       ? "Double-tap anywhere on the note to turn the mic on, and again to turn it off if it ever stays on. The small orange dot at the top of the screen tells you it's on. In Name Mode, double-tapping after the reveal starts the list backup."
       : "Starts as soon as you tap the poem note on the Notes list.";
@@ -1427,35 +1489,49 @@
     t.addEventListener("change", function(){ if (t.value) { onChange(t.value); saveCfg(); renderSettingsLists(); } });
     return t;
   }
-  function relDays(d){
-    if (d === 0) return "same day as the poem";
-    var n = Math.abs(d);
-    return n + " day" + (n===1?"":"s") + (d > 0 ? " before the poem" : " after the poem");
+  // move a row (entry or the prediction) up or down
+  function moveRow(pos, dir){
+    var rows = listRows(true), to = pos + dir;
+    if (to < 0 || to >= rows.length) return;
+    var t = rows[pos]; rows[pos] = rows[to]; rows[to] = t;
+    cfg.maybeList = rows.filter(function(r){ return !r.live; }).map(function(r){ return r.e; });
+    rows.forEach(function(r, k){ if (r.live) cfg.livePos = k; });
+    saveCfg(); renderMaybeEd();
   }
   function renderMaybeEd(){
     var ed = $("maybeEd"); ed.innerHTML = "";
     var rows = listRows(true);
     rows.forEach(function(r, pos){
-      var it = el("div","ed-item" + (r.live ? " poem" : "")), f = el("div","ed-f");
-      var line = el("div","ed-line");
+      var it = el("div","ed-item one" + (r.live ? " poem" : "")), f = el("div","ed-f");
       if (r.live) {
-        var lab = el("div"); lab.appendChild(el("b",null,"★ The prediction")); 
-        lab.appendChild(el("small",null," · " + (pos+1) + " of " + rows.length + " · " + relDays(cfg.liveDaysBefore) + (cfg.liveDaysBefore < 0 ? " (future)" : "")));
+        var lab = el("div"); lab.appendChild(el("b",null,"★ The prediction"));
+        lab.appendChild(el("small",null," · " + (pos+1) + " of " + rows.length));
         f.appendChild(lab);
-        line.appendChild(smallStepper(entryDate(),
-          function(){ cfg.liveDaysBefore = Math.min(730, cfg.liveDaysBefore + 1); saveCfg(); renderMaybeEd(); },
-          function(){ cfg.liveDaysBefore = Math.max(-365, cfg.liveDaysBefore - 1); saveCfg(); renderMaybeEd(); }));
-        f.appendChild(line);
       } else {
         var e = r.e;
-        line.appendChild(smallStepper(mmdd(maybeDate(e.d)),
-          function(){ e.d = Math.min(730, (e.d||0) + 1); saveCfg(); renderMaybeEd(); },
-          function(){ e.d = Math.max(-365, (e.d||0) - 1); saveCfg(); renderMaybeEd(); }));
-        line.appendChild(xButton(function(){ cfg.maybeList.splice(cfg.maybeList.indexOf(e),1); saveCfg(); renderMaybeEd(); }));
-        f.appendChild(line);
         f.appendChild(edInput(e.text, "Maybe Alex", function(v){ e.text = v; }));
+        var line = el("div","ed-line");
+        var sg = el("div","seg sm");
+        [["yes","YES"],["no","NO"],["","—"]].forEach(function(o){
+          var b = el("button", (e.result||"") === o[0] ? "on" : "", o[1]);
+          b.addEventListener("click", function(){ e.result = o[0]; saveCfg(); renderMaybeEd(); });
+          sg.appendChild(b);
+        });
+        line.appendChild(sg);
+        line.appendChild(xButton(function(){
+          var k = cfg.maybeList.indexOf(e); cfg.maybeList.splice(k,1);
+          if (k < cfg.livePos) cfg.livePos--;
+          saveCfg(); renderMaybeEd();
+        }));
+        f.appendChild(line);
       }
-      it.appendChild(f); ed.appendChild(it);
+      var c = el("div","ed-ctl");
+      var up = el("button",null,"↑"), dn = el("button",null,"↓");
+      up.disabled = pos === 0; dn.disabled = pos === rows.length-1;
+      up.addEventListener("click", function(){ moveRow(pos, -1); });
+      dn.addEventListener("click", function(){ moveRow(pos, 1); });
+      c.appendChild(up); c.appendChild(dn);
+      it.appendChild(f); it.appendChild(c); ed.appendChild(it);
     });
     renderPreviews();
   }
@@ -1496,9 +1572,11 @@
   }
   // the poem's date affects the Maybe dates, the poem card, and the list order
   function renderSettingsLists(){ renderSteppers(); renderMaybeEd(); renderNotesEd(); }
+  $("markSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.markMode = b.dataset.v; saveCfg(); renderPreviews(); });
+  $("lenSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.youLength = b.dataset.v; saveCfg(); renderNoteSettings(); });
+  $("f-markText").addEventListener("input", function(){ cfg.markText = $("f-markText").value; saveCfg(); });
   $("addEntry").addEventListener("click", function(){
-    var maxD = cfg.maybeList.reduce(function(m,e){ return Math.max(m, e.d||0); }, cfg.liveDaysBefore);
-    cfg.maybeList.push({d:maxD + 7, text:""}); saveCfg(); renderMaybeEd();
+    cfg.maybeList.push({text:"", result:""}); saveCfg(); renderMaybeEd();
     var ins = $("maybeEd").querySelectorAll("input"); ins[ins.length-1].focus();
   });
   $("addNote").addEventListener("click", function(){
@@ -1576,6 +1654,7 @@
     ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
     $("f-askName").checked = cfg.maybeFormat === "sentence";
+    $("f-markText").value = cfg.markText || " - YES";
     $("f-unsure").checked = !!cfg.unsure;
     setSeg("unsureSeg", cfg.unsureOrder || "mix");
     $("f-unsureJoin").value = cfg.unsureJoin || "or";
@@ -1599,7 +1678,7 @@
     var k = src();
     $("sum-note").textContent = (k === "you" ? "YOU poem" : k === "text" ? "My text" + (noteTitle() ? " · " + q(noteTitle()) : "") : "Photo" + (noteTitle() ? " · " + q(noteTitle()) : ""));
     $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger").split(",")[0].trim()) + " → " + q(val("lock").split(",")[0].trim()) + (cfg.sensitivity === "noisy" ? " · noisy room" : cfg.sensitivity === "exact" ? " · exact" : "");
-    $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + (cfg.unsure ? " · unsure" : "") + " · " + cfg.maybeList.length + " other entr" + (cfg.maybeList.length === 1 ? "y" : "ies") + " · prediction " + entryDate() + (cfg.liveDaysBefore < 0 ? " (future)" : "");
+    $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + (cfg.unsure ? " · unsure" : "") + " · " + (cfg.maybeList.length + 1) + " lines · prediction #" + (Math.min(cfg.livePos, cfg.maybeList.length) + 1);
     $("sum-name").textContent = cfg.nameMode ? "On · name goes in the poem" : "Off · name goes in the list";
     $("sum-look").textContent = val("homeTitle") + " · poem note " + (cfg.poemDays === 0 ? "today " + fmtTime(poemDate()) : dayLabel(cfg.poemDays)) + " · " + cfg.homeNotes.length + " other notes";
     var langEl = $("f-lang"), langName = langEl.options[langEl.selectedIndex] ? langEl.options[langEl.selectedIndex].text : cfg.lang;
