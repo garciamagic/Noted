@@ -203,6 +203,11 @@
   .ed-ctl button{width:34px;height:30px;border-radius:9px;border:0;background:#44464b;color:#fff;font-size:15px;line-height:1;cursor:pointer;font-family:inherit;padding:0}
   .ed-ctl button.x{color:#ff6961}
   .seg.sm button{padding:7px 4px;font-size:13px}
+  .drag-item{align-items:center}
+  .drag-handle{flex:none;width:34px;align-self:stretch;display:flex;align-items:center;justify-content:center;font-size:22px;color:#8e9096;
+    touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
+  .drag-item.dragging{transform:scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,.45);background:#44464b;position:relative;z-index:2;transition:transform .1s}
+  .drag-item.poem.dragging{background:#1a73e855}
   .seg.sm{flex:1}
   .ed-item.one,.ed-item.sec{align-items:center}
   .ed-item.one .ed-ctl,.ed-item.sec .ed-ctl{flex-direction:row}
@@ -443,17 +448,14 @@
         </div>
         <div class="subsec">
           <h4>Entries</h4>
-          <p class="sub">Shown in this order, top to bottom. Mark each one YES, NO, or leave it blank. The blue row is where the prediction appears; move it with the arrows.</p>
+          <p class="sub">Shown in this order, top to bottom. Type “ - YES” or “ - NO” into an entry if you want it marked. Drag the ≡ handle to move a line. The blue row is where the prediction appears.</p>
           <label class="fld"><span>List heading</span><input class="inp" id="f-maybeHeading" autocomplete="off"></label>
           <div class="ed" id="maybeEd"></div>
           <div class="btn-row"><button class="gbtn blue" id="addEntry">+ Add entry</button></div>
         </div>
         <div class="subsec">
           <h4>After the Reveal</h4>
-          <p class="sub">Add “YES” to the prediction in front of them.</p>
-          <div class="seg" id="markSeg"><button data-v="type">Type it myself</button><button data-v="auto">Hold to write it</button></div>
-          <p class="note" id="markNote"></p>
-          <label class="fld" id="markTextWrap"><span>What gets written</span><input class="inp" id="f-markText" autocomplete="off"></label>
+          <p class="note" style="margin-top:0">Tap the end of the prediction line. The keyboard comes up with the cursor at the end, so you can type “ - YES” like a normal note.</p>
         </div>
       </div>
     </div>
@@ -554,7 +556,7 @@
       <li><b>Get their name, any time.</b> If “Ask their name too” is on, ask <span class="say" id="g-me">“What's your name?”</span> and say <span class="say" id="g-melock">“Nice…”</span> after they answer. Before, during, or after the poem, in either order. The mic turns off after each name, so double-tap (or turn the phone face down) before asking for the other one.</li>
       <li><b>They finish the poem.</b> It ends with “you”.</li>
       <li><b>Show the list.</b> Scroll down past the poem to the list of past predictions. One of them has the name.</li>
-      <li><b>Mark it.</b> Tap the end of that line and type “ - YES”, like the others (or hold the line, if you chose “Hold to write it”).</li>
+      <li><b>Mark it.</b> Tap the end of that line and type “ - YES”, like the others.</li>
     </ol>
 
     <h2 class="part">Part 3: Name Mode</h2>
@@ -590,11 +592,10 @@
     nameMode:false, maybeOn:true, flipOn:true, stopAfterLock:true, readSwitch:true, autoDelay:5, maybeFormat:"name", maybePrefix:"Maybe",
     maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"right on",
     liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
-    maybeList:[{text:"Maybe John",result:"yes"},{text:"Cat or a Kate",result:"yes"},{text:"Something like Bill",result:"no"},
-      {text:"Harry",result:"yes"},{text:"Sarah will think Alina",result:"no"},{text:"NO NO NO",result:""},{text:"Susan",result:"yes"},
-      {text:"Their Father, Joe or Joseph",result:"yes"},{text:"Maybe Alex",result:"yes"},{text:"Something like Mark",result:""},
-      {text:"Diana",result:""},{text:"Steve or Steven",result:""}],
-    livePos:10, markMode:"type", markText:" - YES", youLength:"short",
+    maybeList:[{text:"Maybe John - YES"},{text:"Cat or a Kate - YES"},{text:"Something like Bill - NO"},{text:"Harry - YES"},
+      {text:"Sarah will think Alina - NO"},{text:"NO NO NO"},{text:"Susan - YES"},{text:"Their Father, Joe or Joseph - YES"},
+      {text:"Maybe Alex - YES"},{text:"Something like Mark"},{text:"Diana"},{text:"Steve or Steven"}],
+    livePos:10, youLength:"short",
     homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"you", customTitle:"", customText:"", photoTitle:"", poemDays:0, poemTime:"20:18",
     homeNotes:[
       {title:"Maybe I could hold your hand Even...", preview:"say I am. More than night enough", days:0, time:"16:50"},
@@ -620,6 +621,11 @@
       : texts.map(function(t){ return {text:t, result:""}; });
     if (typeof cfg.livePos !== "number") cfg.livePos = 0;
   }
+  // YES/NO used to be separate buttons: fold them into the text
+  cfg.maybeList.forEach(function(e){
+    if (e.result) { e.text = (e.text || "") + (e.result === "yes" ? " - YES" : " - NO"); }
+    delete e.result; delete e.d;
+  });
   if (!/^\d{1,2}:\d{2}$/.test(cfg.poemTime||"")) cfg.poemTime = DEFAULTS.poemTime;
   function maybeActive(){ return !cfg.nameMode || cfg.maybeOn; }
   function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} if (typeof renderSummaries === "function") renderSummaries(); }
@@ -799,27 +805,10 @@
   function caretToEnd(node){
     try { var r = document.createRange(); r.selectNodeContents(node); r.collapse(false); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch(e){}
   }
+  // after the reveal, tap the end of the prediction line: the keyboard comes up with the cursor at the end, like Notes
   function setupLive(lv){
-    if (cfg.markMode === "type") {
-      // type it yourself: tap the line and the keyboard comes up with the cursor at the end, like Notes
-      lv.contentEditable = "true"; lv.spellcheck = false; lv.setAttribute("autocapitalize","characters");
-      lv.addEventListener("focus", function(){ setTimeout(function(){ caretToEnd(lv); }, 0); });
-    } else {
-      // hold the line: it writes the text out for you, letter by letter
-      var t = null, done = false;
-      var startHold = function(){ if (done) return; t = setTimeout(function(){ done = true; typeOut(lv, cfg.markText || " - YES"); }, 600); };
-      var endHold = function(){ clearTimeout(t); };
-      lv.addEventListener("touchstart", startHold, {passive:true}); lv.addEventListener("mousedown", startHold);
-      ["touchend","touchmove","mouseup","mouseleave"].forEach(function(ev){ lv.addEventListener(ev, endHold, {passive:true}); });
-    }
-  }
-  function typeOut(lv, text){
-    var span = el("span"), caret = el("span","fakecaret"); lv.appendChild(span); lv.appendChild(caret);
-    var i = 0;
-    (function next(){
-      if (i < text.length) { span.textContent += text.charAt(i++); setTimeout(next, 90 + Math.random()*110); }
-      else setTimeout(function(){ caret.remove(); }, 1200);
-    })();
+    lv.contentEditable = "true"; lv.spellcheck = false; lv.setAttribute("autocapitalize","characters");
+    lv.addEventListener("focus", function(){ setTimeout(function(){ caretToEnd(lv); }, 0); });
   }
   function sortedMaybe(){ return cfg.maybeList.slice().sort(function(a,b){ return (a.d||0) - (b.d||0); }); }
   /* ---------- "Sound unsure": a near-miss version of a name ---------- */
@@ -891,7 +880,7 @@
     list.innerHTML = "";
     listRows(!!them).forEach(function(r){
       if (r.live) { var lv = el("div",null, entryText(them, me)); lv.id = "live"; setupLive(lv); list.appendChild(lv); }
-      else if (r.e.text && r.e.text.trim()) list.appendChild(el("div",null, r.e.text.trim() + resultText(r.e.result)));
+      else if (r.e.text && r.e.text.trim()) list.appendChild(el("div",null, r.e.text.trim()));
     });
   }
 
@@ -1419,11 +1408,7 @@
     }[cfg.sensitivity || "normal"];
     document.querySelectorAll(".ph-word").forEach(function(s){ s.textContent = val("placeholder"); });
     $("pv-entry").textContent = entryText("Kate", "Alina");
-    setSeg("markSeg", cfg.markMode); setSeg("lenSeg", cfg.youLength || "short");
-    $("markNote").textContent = cfg.markMode === "type"
-      ? "Tap the end of the prediction line. The keyboard comes up with the cursor at the end, so you can type “ - YES” like a normal note."
-      : "Hold your finger on the prediction line for a moment. The text writes itself out, letter by letter.";
-    $("markTextWrap").style.display = cfg.markMode === "auto" ? "" : "none";
+    setSeg("lenSeg", cfg.youLength || "short");
     $("startNote").innerHTML = cfg.startMode === "tap"
       ? "Double-tap anywhere on the note to turn the mic on, and again to turn it off if it ever stays on. The small orange dot at the top of the screen tells you it's on. In Name Mode, double-tapping after the reveal starts the list backup."
       : "Starts as soon as you tap the poem note on the Notes list.";
@@ -1489,51 +1474,77 @@
     t.addEventListener("change", function(){ if (t.value) { onChange(t.value); saveCfg(); renderSettingsLists(); } });
     return t;
   }
-  // move a row (entry or the prediction) up or down
-  function moveRow(pos, dir){
-    var rows = listRows(true), to = pos + dir;
-    if (to < 0 || to >= rows.length) return;
-    var t = rows[pos]; rows[pos] = rows[to]; rows[to] = t;
-    cfg.maybeList = rows.filter(function(r){ return !r.live; }).map(function(r){ return r.e; });
-    rows.forEach(function(r, k){ if (r.live) cfg.livePos = k; });
-    saveCfg(); renderMaybeEd();
-  }
   function renderMaybeEd(){
     var ed = $("maybeEd"); ed.innerHTML = "";
     var rows = listRows(true);
     rows.forEach(function(r, pos){
-      var it = el("div","ed-item one" + (r.live ? " poem" : "")), f = el("div","ed-f");
+      var it = el("div","ed-item drag-item" + (r.live ? " poem" : "")); it._row = r;
+      var h = el("div","drag-handle","≡"); it.appendChild(h);
+      var f = el("div","ed-f");
       if (r.live) {
         var lab = el("div"); lab.appendChild(el("b",null,"★ The prediction"));
         lab.appendChild(el("small",null," · " + (pos+1) + " of " + rows.length));
-        f.appendChild(lab);
+        f.appendChild(lab); it.appendChild(f);
       } else {
         var e = r.e;
-        f.appendChild(edInput(e.text, "Maybe Alex", function(v){ e.text = v; }));
-        var line = el("div","ed-line");
-        var sg = el("div","seg sm");
-        [["yes","YES"],["no","NO"],["","—"]].forEach(function(o){
-          var b = el("button", (e.result||"") === o[0] ? "on" : "", o[1]);
-          b.addEventListener("click", function(){ e.result = o[0]; saveCfg(); renderMaybeEd(); });
-          sg.appendChild(b);
-        });
-        line.appendChild(sg);
-        line.appendChild(xButton(function(){
+        f.appendChild(edInput(e.text, "Maybe Alex - YES", function(v){ e.text = v; }));
+        it.appendChild(f);
+        it.appendChild(xButton(function(){
           var k = cfg.maybeList.indexOf(e); cfg.maybeList.splice(k,1);
           if (k < cfg.livePos) cfg.livePos--;
           saveCfg(); renderMaybeEd();
         }));
-        f.appendChild(line);
       }
-      var c = el("div","ed-ctl");
-      var up = el("button",null,"↑"), dn = el("button",null,"↓");
-      up.disabled = pos === 0; dn.disabled = pos === rows.length-1;
-      up.addEventListener("click", function(){ moveRow(pos, -1); });
-      dn.addEventListener("click", function(){ moveRow(pos, 1); });
-      c.appendChild(up); c.appendChild(dn);
-      it.appendChild(f); it.appendChild(c); ed.appendChild(it);
+      dragify(it, h, ed);
+      ed.appendChild(it);
     });
     renderPreviews();
+  }
+  // drag a row by its handle; the rows move out of the way as you go, and the new order is saved on release
+  function dragify(item, handle, list){
+    var scroller = $("settingsBody"), lastY = 0, raf = null;
+    function onMove(e){
+      var y = e.touches ? e.touches[0].clientY : e.clientY; lastY = y;
+      if (e.cancelable) e.preventDefault();
+      // move the row past any neighbour whose middle it has crossed (several at once if the finger moved fast)
+      var moved = true;
+      while (moved) {
+        moved = false;
+        var prev = item.previousElementSibling, next = item.nextElementSibling;
+        if (prev) { var pr = prev.getBoundingClientRect(); if (y < pr.top + pr.height/2) { list.insertBefore(item, prev); moved = true; continue; } }
+        if (next) { var nr = next.getBoundingClientRect(); if (y > nr.top + nr.height/2) { list.insertBefore(next, item); moved = true; } }
+      }
+    }
+    // keep scrolling while the finger rests near the top or bottom edge
+    function edgeScroll(){
+      var sb = scroller.getBoundingClientRect();
+      if (lastY < sb.top + 70) scroller.scrollTop -= 10;
+      else if (lastY > sb.bottom - 70) scroller.scrollTop += 10;
+      raf = requestAnimationFrame(edgeScroll);
+    }
+    function onUp(){
+      window.removeEventListener("touchmove", onMove); window.removeEventListener("touchend", onUp); window.removeEventListener("touchcancel", onUp);
+      window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
+      cancelAnimationFrame(raf);
+      item.classList.remove("dragging");
+      var rows = Array.prototype.map.call(list.children, function(c){ return c._row; }).filter(Boolean);
+      cfg.maybeList = rows.filter(function(r){ return !r.live; }).map(function(r){ return r.e; });
+      rows.forEach(function(r, k){ if (r.live) cfg.livePos = k; });
+      saveCfg(); renderMaybeEd();
+    }
+    function onDown(e){
+      if (e.cancelable) e.preventDefault();
+      lastY = e.touches ? e.touches[0].clientY : e.clientY;
+      item.classList.add("dragging");
+      if (e.touches) {
+        window.addEventListener("touchmove", onMove, {passive:false}); window.addEventListener("touchend", onUp); window.addEventListener("touchcancel", onUp);
+      } else {
+        window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+      }
+      raf = requestAnimationFrame(edgeScroll);
+    }
+    handle.addEventListener("touchstart", onDown, {passive:false});
+    handle.addEventListener("mousedown", onDown);
   }
   function renderNotesEd(){
     var ed = $("notesEd"); ed.innerHTML = "";
@@ -1572,11 +1583,9 @@
   }
   // the poem's date affects the Maybe dates, the poem card, and the list order
   function renderSettingsLists(){ renderSteppers(); renderMaybeEd(); renderNotesEd(); }
-  $("markSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.markMode = b.dataset.v; saveCfg(); renderPreviews(); });
   $("lenSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.youLength = b.dataset.v; saveCfg(); renderNoteSettings(); });
-  $("f-markText").addEventListener("input", function(){ cfg.markText = $("f-markText").value; saveCfg(); });
   $("addEntry").addEventListener("click", function(){
-    cfg.maybeList.push({text:"", result:""}); saveCfg(); renderMaybeEd();
+    cfg.maybeList.push({text:""}); saveCfg(); renderMaybeEd();
     var ins = $("maybeEd").querySelectorAll("input"); ins[ins.length-1].focus();
   });
   $("addNote").addEventListener("click", function(){
@@ -1654,7 +1663,6 @@
     ["debug","maybeOn","flipOn","readSwitch","showPinned","nameMode","stopAfterLock"].forEach(function(k){ $("f-"+k).checked = !!cfg[k]; });
     $("f-lang").value = cfg.lang;
     $("f-askName").checked = cfg.maybeFormat === "sentence";
-    $("f-markText").value = cfg.markText || " - YES";
     $("f-unsure").checked = !!cfg.unsure;
     setSeg("unsureSeg", cfg.unsureOrder || "mix");
     $("f-unsureJoin").value = cfg.unsureJoin || "or";
