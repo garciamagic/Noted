@@ -339,23 +339,29 @@
 
     <button class="card link-card" id="openGuide"><span><b>Instructions</b><small>How to set up and perform it</small></span><span class="chev">›</span></button>
 
-    <!-- ===== PERMISSIONS (always open) ===== -->
+    <!-- ===== BEFORE YOU PERFORM (always open) ===== -->
     <div class="card">
-      <h3>Permissions</h3>
-      <p class="sub">Allow these before you perform, so no pop-up appears in front of anyone.</p>
+      <h3>Before You Perform</h3>
+      <p class="sub">Allow these first, so no pop-up appears in front of anyone. If you fully close Noted, allow them again.</p>
       <div class="mode"><span><b>Microphone</b><small id="micStatus">Not allowed yet</small></span><span id="micSlot"><button class="gbtn blue" id="allowMic">Allow</button></span></div>
       <div class="mode" id="motionRow"><span><b>Motion</b><small id="motionStatus">For face-down start</small></span><span id="motionSlot"><button class="gbtn blue" id="allowMotion">Allow</button></span></div>
-      <p class="note">If you fully close Noted (swipe it away), tap Allow again.</p>
+      <div class="mode"><span><b>Rehearsal Mode</b><small>Shows what it hears at the top. Turn off before you perform.</small></span><label class="pill"><input type="checkbox" id="f-debug"><span></span></label></div>
     </div>
 
-    <!-- ===== TRICK NOTE ===== -->
+    <!-- ===== THE NOTE ===== -->
     <div class="group" id="g-note">
-      <button class="group-head"><span><b>Trick Note</b><small id="sum-note"></small></span><span class="chev">›</span></button>
+      <button class="group-head"><span><b>The Note</b><small id="sum-note"></small></span><span class="chev">›</span></button>
       <div class="group-body">
         <div class="subsec">
-          <h4>Use</h4>
-          <div class="seg" id="srcSeg"><button data-v="you">YOU poem</button><button data-v="scribble">Scribble</button><button data-v="text">My text</button><button data-v="photo">Photo</button></div>
+          <h4>What they see</h4>
+          <div class="seg" id="srcSeg"><button data-v="scribble">Scribble</button><button data-v="you">YOU poem</button><button data-v="text">My text</button><button data-v="photo">Photo</button></div>
           <p class="note warn" id="srcWarn" style="display:none"></p>
+        </div>
+
+        <div class="subsec" id="srcScribble">
+          <div class="scrib-prev"><img id="scribPrevA" alt=""><img id="scribPrevB" alt=""></div>
+          <div class="mode"><span><b>Dual reality</b><small>After you've scrolled down to the list and back up, turning the phone toward someone else shows names under the scribble. Turn it back and they're gone. Happens once.</small></span><label class="pill"><input type="checkbox" id="f-dualOn"><span></span></label></div>
+          <p class="note" id="dualNote">Needs <b>Motion</b> allowed (Before You Perform). The switch happens while the screen is edge-on during the turn, so nobody on your side sees it change.</p>
         </div>
 
         <div class="subsec" id="srcYou">
@@ -364,21 +370,12 @@
         </div>
 
         <div class="subsec" id="srcText">
-          <h4>My text</h4>
-          <label class="fld"><span>Title</span><input class="inp" id="f-customTitle" autocomplete="off" placeholder="No title"></label>
+          <label class="fld" style="margin-top:0"><span>Title</span><input class="inp" id="f-customTitle" autocomplete="off" placeholder="No title"></label>
           <label class="fld"><span>Text</span><textarea class="inp" id="f-customText" spellcheck="false" placeholder="Type or paste a poem or lyrics…"></textarea></label>
           <p class="note">A blank line starts a new stanza. Type <b>[NAME]</b> where the name goes in Name Mode.</p>
         </div>
 
-        <div class="subsec" id="srcScribble">
-          <h4>Scribble</h4>
-          <div class="scrib-prev"><img id="scribPrevA" alt=""><img id="scribPrevB" alt=""></div>
-          <div class="mode"><span><b>Dual reality</b><small>After you've scrolled down to the prediction list and back up to the scribble, turning the phone toward someone else shows names under it. Turn it back and they're gone. It only happens once.</small></span><label class="pill"><input type="checkbox" id="f-dualOn"><span></span></label></div>
-          <p class="note" id="dualNote">Needs <b>Motion</b> allowed (Permissions, at the top). The switch happens while the screen is edge-on during the turn, so nobody on your side sees it change.</p>
-        </div>
-
         <div class="subsec" id="srcPhoto">
-          <h4>Photo</h4>
           <p class="sub">A poem, a page from a book, or a photo of anything. Tapping it opens it full screen, like in Notes.</p>
           <div class="photo-pick">
             <span id="photoThumb"><span class="ph-empty">No photo</span></span>
@@ -390,6 +387,51 @@
           <label class="fld"><span>Title (optional)</span><input class="inp" id="f-photoTitle" autocomplete="off" placeholder="No title"></label>
         </div>
 
+        <div class="subsec">
+          <h4>Date shown on the note</h4>
+          <div class="mode" style="margin-top:0"><b>Day</b>
+            <div class="stepper"><button id="pdMinus" aria-label="Earlier">−</button><output id="pdVal" class="wide">Today</output><button id="pdPlus" aria-label="Later">+</button></div></div>
+          <div class="mode"><b>Time</b><input class="inp time" id="f-poemTime" type="time"></div>
+          <p class="note" id="pdNote"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== THE PREDICTION ===== -->
+    <div class="group" id="g-list">
+      <button class="group-head"><span><b>The Prediction</b><small id="sum-list"></small></span><span class="chev">›</span></button>
+      <div class="group-body">
+        <p class="sub" style="margin:2px 0 0">The list hidden below the note. The name they think of appears at the blue row.</p>
+        <div class="preview"><small>The prediction will read</small><span id="pv-entry"></span></div>
+
+        <div class="subsec">
+          <h4>How it's written</h4>
+          <label class="fld" style="margin-top:0"><span id="prefixLabel">Word before the name (blank = none)</span><input class="inp" id="f-maybePrefix" autocomplete="off"></label>
+          <div id="fmtSentence">
+            <label class="fld"><span>Sentence, when you also ask their name ({me} = their name, {them} = the person)</span><input class="inp" id="f-maybeTemplate" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          </div>
+          <div class="mode-card" id="unsureCard">
+            <div class="mode"><span><b>Sound unsure</b><small>Adds a near-miss name: “Maybe Cat or Kate”, “Diane or Diana”</small></span><label class="pill"><input type="checkbox" id="f-unsure"><span></span></label></div>
+            <div class="mc-body">
+              <label class="fld"><span>Real name goes</span></label>
+              <div class="seg" id="unsureSeg"><button data-v="first">First</button><button data-v="second">Second</button><button data-v="mix">Mix it up</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsec">
+          <h4>The list</h4>
+          <label class="fld" style="margin-top:0"><span>Heading</span><input class="inp" id="f-maybeHeading" autocomplete="off"></label>
+          <p class="note">Top to bottom. Drag ≡ to move a line. Type “ - YES” or “ - NO” into a line to mark it.</p>
+          <div class="ed" id="maybeEd"></div>
+          <div class="btn-row"><button class="gbtn blue" id="addEntry">+ Add line</button></div>
+        </div>
+
+        <div class="subsec">
+          <h4>After the reveal</h4>
+          <p class="note" style="margin-top:0">Tap the end of the prediction line and type “ - YES”, like a normal note.</p>
+          <div class="mode"><span><b>Keep each prediction</b><small>When you go back to the Notes list, it stays in the list and the next one goes below it</small></span><label class="pill"><input type="checkbox" id="f-keepPredictions"><span></span></label></div>
+        </div>
       </div>
     </div>
 
@@ -398,75 +440,44 @@
       <button class="group-head"><span><b>Listening</b><small id="sum-listen"></small></span><span class="chev">›</span></button>
       <div class="group-body">
         <div class="subsec">
-          <h4>Start Listening</h4>
-          <div class="seg" id="startSeg"><button data-v="tap">Double-tap the poem</button><button data-v="open">When it opens</button></div>
+          <h4>Turning the mic on</h4>
+          <div class="seg" id="startSeg"><button data-v="tap">Double-tap the note</button><button data-v="open">When it opens</button></div>
           <p class="note" id="startNote"></p>
           <div class="mode"><span><b>Face down also starts it</b><small>Turn the phone face down to start the mic</small></span><label class="pill"><input type="checkbox" id="f-flipOn"><span></span></label></div>
         </div>
+
         <div class="subsec">
-          <h4>Phrases</h4>
-          <p class="sub">Say a trigger and it listens for a first name. Say the lock word after they answer.</p>
-          <label class="fld"><span>Trigger for the person they think of</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="fld"><span>Lock word after that name</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <div class="mode"><span><b>Ask their name too</b><small>Also listen for “What's your name?” so the entry can include their name</small></span><label class="pill"><input type="checkbox" id="f-askName"><span></span></label></div>
-          <div id="meFields">
-            <label class="fld"><span>Trigger for their own name</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-            <label class="fld"><span>Lock word after their name</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          </div>
-          <p class="note"><b>Tip:</b> A phrase only has to be part of what you say. You can also list other ways the iPhone might hear it, separated by commas, like <b>right on, write on, alright on</b>. Rehearsal Mode shows exactly what it hears.</p>
-          <div class="mode"><span><b>Mic off after each name</b><small>Turns off after “<span class="lk-word">interesting</span>” and after “<span class="mlk-word">nice</span>”. Double-tap or turn face down to listen for the other name.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
+          <h4>The person they think of</h4>
+          <label class="fld" style="margin-top:0"><span>You say (trigger)</span><input class="inp" id="f-trigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="fld"><span>Then, after their answer (lock word)</span><input class="inp" id="f-lock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <p class="note">A phrase only has to be part of what you say. Add other ways the iPhone might hear it with commas, like <b>right on, write on</b>.</p>
         </div>
+
         <div class="subsec">
-          <h4>Noisy Rooms</h4>
+          <h4>Their own name</h4>
+          <div class="mode" style="margin-top:0"><span><b>Ask their name too</b><small>Also listen for “What's your name?”, so the prediction can include it</small></span><label class="pill"><input type="checkbox" id="f-askName"><span></span></label></div>
+          <div id="meFields">
+            <label class="fld"><span>You say (trigger)</span><input class="inp" id="f-meTrigger" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+            <label class="fld"><span>Then, after their answer (lock word)</span><input class="inp" id="f-meLock" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          </div>
+        </div>
+
+        <div class="subsec">
+          <h4>Turning the mic off</h4>
+          <div class="mode" style="margin-top:0"><span><b>Off after each name</b><small>After “<span class="lk-word">interesting</span>”<span class="mlk-wrap"> or “<span class="mlk-word">nice</span>”</span>. Double-tap to turn it back on.</small></span><label class="pill"><input type="checkbox" id="f-stopAfterLock"><span></span></label></div>
+          <div class="mode-card" id="autoCard">
+            <div class="mode"><span><b>Auto-lock</b><small>Sets the name by itself if you forget the lock word</small></span><label class="pill"><input type="checkbox" id="autoOn"><span></span></label></div>
+            <div class="mc-body">
+              <div class="mode"><b>Seconds after a name</b>
+                <div class="stepper"><button id="toMinus" aria-label="Less">−</button><output id="toVal">8</output><button id="toPlus" aria-label="More">+</button></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsec">
+          <h4>Loud rooms</h4>
           <div class="seg" id="sensSeg"><button data-v="exact">Exact</button><button data-v="normal">Normal</button><button data-v="noisy">Noisy room</button></div>
           <p class="note" id="sensNote"></p>
-        </div>
-        <div class="subsec mode-card" id="autoCard">
-          <div class="mc-head"><h4>Auto-Lock</h4><label class="pill"><input type="checkbox" id="autoOn"><span></span></label></div>
-          <p class="sub" style="margin:6px 0 0">Sets the name by itself if you forget the lock word.</p>
-          <div class="mc-body">
-            <div class="mode"><b>Seconds after a name</b>
-              <div class="stepper"><button id="toMinus" aria-label="Less">−</button><output id="toVal">8</output><button id="toPlus" aria-label="More">+</button></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== PREDICTION LIST ===== -->
-    <div class="group" id="g-list">
-      <button class="group-head"><span><b>Prediction List</b><small id="sum-list"></small></span><span class="chev">›</span></button>
-      <div class="group-body">
-        <p class="sub" style="margin:2px 0 0">The list hidden far below the poem. The name they think of is added to the top.</p>
-        <div class="preview"><small>New entry</small><span id="pv-entry"></span></div>
-        <div class="subsec">
-          <h4>Entry Style</h4>
-          <div id="fmtSentence">
-            <label class="fld"><span>Sentence ({me} = their name, {them} = the person)</span><input class="inp" id="f-maybeTemplate" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-            <p class="note">Used when “Ask their name too” is on (Listening). Ask any time, in any order. Their name always goes first.</p>
-          </div>
-          <label class="fld"><span id="prefixLabel">Word before the name (blank = none)</span><input class="inp" id="f-maybePrefix" autocomplete="off"></label>
-        </div>
-        <div class="subsec mode-card" id="unsureCard">
-          <div class="mc-head"><h4>Sound Unsure</h4><label class="pill"><input type="checkbox" id="f-unsure"><span></span></label></div>
-          <p class="sub" style="margin:6px 0 0">Adds a near-miss next to the real name, like “Maybe John or Jonny” or “Maybe Cat or Kate”.</p>
-          <div class="mc-body">
-            <label class="fld"><span>Real name goes</span></label>
-            <div class="seg" id="unsureSeg"><button data-v="first">First</button><button data-v="second">Second</button><button data-v="mix">Mix it up</button></div>
-            <label class="fld"><span>Word between the names</span><input class="inp" id="f-unsureJoin" autocomplete="off" autocapitalize="off"></label>
-            <p class="note">The near-miss is a nickname or a different name that sounds close (Kate → Cat, Diana → Diane, Xavier → Javier). Names that sound the same (Sarah/Sara) are never paired. If there's no good near-miss, only the real name is shown. “Mix it up” picks the order by the name.</p>
-          </div>
-        </div>
-        <div class="subsec">
-          <h4>Entries</h4>
-          <p class="sub">Shown in this order, top to bottom. Type “ - YES” or “ - NO” into an entry if you want it marked. Drag the ≡ handle to move a line. The blue row is where the prediction appears.</p>
-          <label class="fld"><span>List heading</span><input class="inp" id="f-maybeHeading" autocomplete="off"></label>
-          <div class="ed" id="maybeEd"></div>
-          <div class="btn-row"><button class="gbtn blue" id="addEntry">+ Add entry</button></div>
-        </div>
-        <div class="subsec">
-          <h4>After the Reveal</h4>
-          <p class="note" style="margin-top:0">Tap the end of the prediction line. The keyboard comes up with the cursor at the end, so you can type “ - YES” like a normal note.</p>
-          <div class="mode"><span><b>Keep each prediction</b><small>When you go back to the Notes list, the prediction (and the “ - YES” you typed) stays in the list, and the next one goes below it. The list grows with every performance.</small></span><label class="pill"><input type="checkbox" id="f-keepPredictions"><span></span></label></div>
         </div>
       </div>
     </div>
@@ -476,9 +487,9 @@
       <button class="group-head"><span><b>Name Mode</b><small id="sum-name"></small></span><span class="chev">›</span></button>
       <div class="group-body">
         <div class="mode-card" id="nameCard">
-          <div class="mode" style="margin-top:0"><span><b>Name Mode</b><small>Puts the name into the poem's last line instead of the list</small></span><label class="pill"><input type="checkbox" id="f-nameMode"><span></span></label></div>
+          <div class="mode" style="margin-top:0"><span><b>Name Mode</b><small>Puts the name into the poem's last line instead of the list (YOU poem or My text)</small></span><label class="pill"><input type="checkbox" id="f-nameMode"><span></span></label></div>
           <div class="mc-body">
-            <p class="note warn" id="nameWarn" style="display:none"><b>Heads up:</b> this trick note has no [NAME], so Name Mode has nowhere to put the name. The prediction list still works.</p>
+            <p class="note warn" id="nameWarn" style="display:none"><b>Heads up:</b> this note has no [NAME], so Name Mode has nowhere to put the name. The prediction list still works.</p>
             <div class="mode"><span><b>List as backup</b><small>If the name is missed, listen again and add it to the list</small></span><label class="pill"><input type="checkbox" id="f-maybeOn"><span></span></label></div>
             <div id="backupRows">
               <div class="mode"><span><b>Automatic restart</b><small>If they read “<span class="ph-word">you</span>”, listen again by itself</small></span><label class="pill"><input type="checkbox" id="f-readSwitch"><span></span></label></div>
@@ -490,26 +501,19 @@
       </div>
     </div>
 
-    <!-- ===== NOTES LOOK ===== -->
+    <!-- ===== NOTES LIST ===== -->
     <div class="group" id="g-look">
-      <button class="group-head"><span><b>Notes Look</b><small id="sum-look"></small></span><span class="chev">›</span></button>
+      <button class="group-head"><span><b>Notes List</b><small id="sum-look"></small></span><span class="chev">›</span></button>
       <div class="group-body">
         <div class="subsec">
-          <h4>Notes List Header</h4>
-          <label class="fld"><span>Title</span><input class="inp" id="f-homeTitle" autocomplete="off"></label>
+          <h4>Header</h4>
+          <label class="fld" style="margin-top:0"><span>Title</span><input class="inp" id="f-homeTitle" autocomplete="off"></label>
           <label class="fld"><span>Count line</span><input class="inp" id="f-homeCount" autocomplete="off"></label>
           <div class="mode"><b>“Pinned” row</b><label class="pill"><input type="checkbox" id="f-showPinned"><span></span></label></div>
         </div>
         <div class="subsec">
-          <h4>Trick Note Date</h4>
-          <div class="mode"><b>Day</b>
-            <div class="stepper"><button id="pdMinus" aria-label="Earlier">−</button><output id="pdVal" class="wide">Today</output><button id="pdPlus" aria-label="Later">+</button></div></div>
-          <div class="mode"><b>Time</b><input class="inp time" id="f-poemTime" type="time"></div>
-          <p class="note" id="pdNote"></p>
-        </div>
-        <div class="subsec">
-          <h4>Other Notes</h4>
-          <p class="sub">Sorted by date with sections made for you, like Notes. Change a day or time to move a note. Blue is the poem note.</p>
+          <h4>Notes</h4>
+          <p class="note" style="margin-top:0">Sorted by date with sections made for you, like Notes. Change a day or time to move a note. Blue is the trick note (set its date under The Note).</p>
           <div class="ed" id="notesEd"></div>
           <div class="btn-row"><button class="gbtn blue" id="addNote">+ Note</button></div>
         </div>
@@ -520,9 +524,6 @@
     <div class="group" id="g-other">
       <button class="group-head"><span><b>Other</b><small id="sum-other"></small></span><span class="chev">›</span></button>
       <div class="group-body">
-        <div class="subsec">
-          <div class="mode" style="margin-top:0"><span><b>Rehearsal Mode</b><small>Shows what it hears at the top. Turn off before you perform.</small></span><label class="pill"><input type="checkbox" id="f-debug"><span></span></label></div>
-        </div>
         <div class="subsec">
           <h4>Language</h4>
           <select class="inp" id="f-lang">
@@ -608,12 +609,12 @@
       {text:"Sarah will think Alina - NO"},{text:"Susan - YES"},{text:"Their Father, Joe or Joseph - YES"},
       {text:"Maybe Alex - YES"},{text:"Something like Mark - NO"},{text:"Owen"},{text:"Steve or Steven"}],
     livePos:9, youLength:"short",
-    homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"you", customTitle:"", customText:"", photoTitle:"", poemDays:0, poemTime:"20:18",
+    homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"scribble", customTitle:"", customText:"", photoTitle:"", poemDays:0, poemTime:"20:18",
     homeNotes:[
-      {title:"Maybe I could hold your hand Even...", preview:"say I am. More than night enough", days:0, time:"16:50"},
-      {title:"Mercedes GT43 AMG", preview:"No additional text", days:2, time:"14:12"},
-      {title:"Hi I’m Danny and I’m a...magician", preview:"I’ve been clean for 47 days", days:3, time:"11:05"},
-      {title:"Arnazon", preview:"No additional text", days:7, time:"09:40"},
+      {title:"Dinner ideas", preview:"Tacos, salmon, that pasta from Sunday", days:0, time:"16:50"},
+      {title:"Call back", preview:"Dentist about Thursday", days:2, time:"14:12"},
+      {title:"Movies to watch", preview:"Ask Sam about the one he mentioned", days:3, time:"11:05"},
+      {title:"Packing list", preview:"Chargers, sunglasses, toothbrush", days:7, time:"09:40"},
       {title:"Groceries", preview:"Eggs, oat milk, coffee, limes", days:17, time:"18:22"},
       {title:"Gift ideas", preview:"Candle, the book she mentioned", days:24, time:"21:03"}
     ],
@@ -623,6 +624,10 @@
   var cfg = clone(DEFAULTS);
   try { Object.assign(cfg, JSON.parse(localStorage.getItem("youPoemCfg4") || "{}")); } catch(e){}
   if (!Array.isArray(cfg.homeNotes)) cfg.homeNotes = clone(DEFAULTS.homeNotes);
+  // swap the old example notes for the new generic ones (only if you never changed them)
+  if (cfg.homeNotes.map(function(n){ return n.title; }).join("|") ===
+      "Maybe I could hold your hand Even...|Mercedes GT43 AMG|Hi I’m Danny and I’m a...magician|Arnazon|Groceries|Gift ideas")
+    cfg.homeNotes = clone(DEFAULTS.homeNotes);
   if (typeof cfg.autoDelay !== "number") cfg.autoDelay = 5;
   if (!Array.isArray(cfg.maybeList)) cfg.maybeList = clone(DEFAULTS.maybeList);
   // older versions kept dated entries: switch to the new dateless list (keep your own entries if you changed them)
@@ -1279,7 +1284,7 @@
     $("micStatus").className = micDenied && !micGranted ? "perm-bad" : "";
     $("motionRow").style.display = ((maybeActive() && cfg.flipOn) || dualActive()) ? "" : "none";
     permSlot("motionSlot", motionGranted === true, "allowMotion", allowMotion);
-    $("motionStatus").textContent = motionGranted === true ? "Ready" : motionGranted === "denied" ? "Blocked. Fully close and reopen Noted to ask again." : "For face-down start";
+    $("motionStatus").textContent = motionGranted === true ? "Ready" : motionGranted === "denied" ? "Blocked. Fully close and reopen Noted to ask again." : (dualActive() ? "For dual reality and face-down start" : "For face-down start");
     $("motionStatus").className = motionGranted === "denied" ? "perm-bad" : "";
   }
 
@@ -1509,6 +1514,7 @@
     yp.appendChild(document.createTextNode(youPoem().replace(/\[NAME\]/g, val("placeholder"))));
     document.querySelectorAll(".lk-word").forEach(function(s){ s.textContent = val("lock").split(",")[0].trim(); });
     document.querySelectorAll(".mlk-word").forEach(function(s){ s.textContent = (cfg.meLock || "right on").split(",")[0].trim(); });
+    document.querySelectorAll(".mlk-wrap").forEach(function(s){ s.style.display = cfg.maybeFormat === "sentence" ? "" : "none"; });
     $("sensNote").innerHTML = {
       exact: "Phrases must be heard exactly. Fewest false triggers; best in a quiet room.",
       normal: "Small slips in long words are OK (“interestin” still counts). Names that are real first names are preferred over other words.",
@@ -1518,13 +1524,13 @@
     $("pv-entry").textContent = entryText("Kate", "Alina");
     setSeg("lenSeg", cfg.youLength || "short");
     $("startNote").innerHTML = cfg.startMode === "tap"
-      ? "Double-tap anywhere on the note to turn the mic on, and again to turn it off if it ever stays on. The small orange dot at the top of the screen tells you it's on. In Name Mode, double-tapping after the reveal starts the list backup."
+      ? "Double-tap anywhere on the note to turn the mic on, and again to turn it off. The orange dot at the top of the screen means it's on."
       : "Starts as soon as you tap the poem note on the Notes list.";
     renderPerms();
     var asking = cfg.maybeFormat === "sentence";
     $("fmtSentence").style.display = asking ? "" : "none";
     $("meFields").style.display = asking ? "" : "none";
-    $("prefixLabel").textContent = asking ? "Word before the name (if their name is missed; blank = none)" : "Word before the name (blank = none)";
+    $("prefixLabel").textContent = asking ? "Word before the name (used if their name is missed; blank = none)" : "Word before the name (blank = none)";
     $("unsureCard").classList.toggle("open", !!cfg.unsure);
     $("nameCard").classList.toggle("open", !!cfg.nameMode);
     $("backupRows").style.display = cfg.maybeOn ? "" : "none";
@@ -1753,7 +1759,6 @@
   $("f-askName").addEventListener("change", function(){ cfg.maybeFormat = $("f-askName").checked ? "sentence" : "name"; saveCfg(); renderPreviews(); });
   $("f-unsure").addEventListener("change", function(){ cfg.unsure = $("f-unsure").checked; saveCfg(); renderPreviews(); });
   $("unsureSeg").addEventListener("click", function(e){ var b = e.target.closest("button"); if (!b) return; cfg.unsureOrder = b.dataset.v; setSeg("unsureSeg", cfg.unsureOrder); saveCfg(); renderPreviews(); });
-  $("f-unsureJoin").addEventListener("input", function(){ cfg.unsureJoin = $("f-unsureJoin").value; saveCfg(); renderPreviews(); });
   $("autoOn").addEventListener("change", function(){ cfg.timeout = $("autoOn").checked ? (lastTimeout || 8) : 0; saveCfg(); renderSteppers(); });
   stepper("toMinus","toPlus", function(){ return cfg.timeout || lastTimeout; }, function(v){ cfg.timeout = v; lastTimeout = v; }, 2, 30);
   stepper("adMinus","adPlus", function(){ return cfg.autoDelay; }, function(v){ cfg.autoDelay = v; }, 0, 30);
@@ -1780,7 +1785,6 @@
     $("f-askName").checked = cfg.maybeFormat === "sentence";
     $("f-unsure").checked = !!cfg.unsure;
     setSeg("unsureSeg", cfg.unsureOrder || "mix");
-    $("f-unsureJoin").value = cfg.unsureJoin || "or";
     setSeg("startSeg", cfg.startMode);
     setSeg("sensSeg", cfg.sensitivity || "normal");
     renderPerms();
@@ -1803,7 +1807,7 @@
     $("sum-listen").textContent = (cfg.startMode === "tap" ? "Double-tap" : "On open") + " · " + q(val("trigger").split(",")[0].trim()) + " → " + q(val("lock").split(",")[0].trim()) + (cfg.sensitivity === "noisy" ? " · noisy room" : cfg.sensitivity === "exact" ? " · exact" : "");
     $("sum-list").textContent = (cfg.maybeFormat === "sentence" ? "Sentence" : "Name only") + (cfg.unsure ? " · unsure" : "") + " · " + (cfg.maybeList.length + 1) + " lines · prediction #" + (Math.min(cfg.livePos, cfg.maybeList.length) + 1);
     $("sum-name").textContent = cfg.nameMode ? "On · name goes in the poem" : "Off · name goes in the list";
-    $("sum-look").textContent = val("homeTitle") + " · poem note " + (cfg.poemDays === 0 ? "today " + fmtTime(poemDate()) : dayLabel(cfg.poemDays)) + " · " + cfg.homeNotes.length + " other notes";
+    $("sum-look").textContent = val("homeTitle") + " · trick note " + (cfg.poemDays === 0 ? "today " + fmtTime(poemDate()) : dayLabel(cfg.poemDays)) + " · " + cfg.homeNotes.length + " other notes";
     var langEl = $("f-lang"), langName = langEl.options[langEl.selectedIndex] ? langEl.options[langEl.selectedIndex].text : cfg.lang;
     $("sum-other").textContent = "Rehearsal " + (cfg.debug ? "on" : "off") + " · " + langName;
   }
