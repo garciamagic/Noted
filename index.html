@@ -593,9 +593,9 @@
     maybeTemplate:"{me} will think of {them}", meTrigger:"what's your name", meLock:"right on",
     liveDaysBefore:0, maybeHeading:"MAYBE’S ::",
     maybeList:[{text:"Maybe John - YES"},{text:"Cat or a Kate - YES"},{text:"Something like Bill - NO"},{text:"Harry - YES"},
-      {text:"Sarah will think Alina - NO"},{text:"NO NO NO"},{text:"Susan - YES"},{text:"Their Father, Joe or Joseph - YES"},
-      {text:"Maybe Alex - YES"},{text:"Something like Mark"},{text:"Diana"},{text:"Steve or Steven"}],
-    livePos:10, youLength:"short",
+      {text:"Sarah will think Alina - NO"},{text:"Susan - YES"},{text:"Their Father, Joe or Joseph - YES"},
+      {text:"Maybe Alex - YES"},{text:"Something like Mark - NO"},{text:"Diana"},{text:"Steve or Steven"}],
+    livePos:9, youLength:"short",
     homeTitle:"Notes", homeCount:"1,192 Notes", showPinned:true, noteSource:"you", customTitle:"", customText:"", photoTitle:"", poemDays:0, poemTime:"20:18",
     homeNotes:[
       {title:"Maybe I could hold your hand Even...", preview:"say I am. More than night enough", days:0, time:"16:50"},
@@ -626,6 +626,11 @@
     if (e.result) { e.text = (e.text || "") + (e.result === "yes" ? " - YES" : " - NO"); }
     delete e.result; delete e.d;
   });
+  // the previous default list (with "NO NO NO") is swapped for the new one
+  (function(){
+    var prev = "Maybe John - YES|Cat or a Kate - YES|Something like Bill - NO|Harry - YES|Sarah will think Alina - NO|NO NO NO|Susan - YES|Their Father, Joe or Joseph - YES|Maybe Alex - YES|Something like Mark|Diana|Steve or Steven";
+    if (cfg.maybeList.map(function(e){ return e.text; }).join("|") === prev) { cfg.maybeList = clone(DEFAULTS.maybeList); cfg.livePos = DEFAULTS.livePos; }
+  })();
   if (!/^\d{1,2}:\d{2}$/.test(cfg.poemTime||"")) cfg.poemTime = DEFAULTS.poemTime;
   function maybeActive(){ return !cfg.nameMode || cfg.maybeOn; }
   function saveCfg(){ try { localStorage.setItem("youPoemCfg4", JSON.stringify(cfg)); } catch(e){} if (typeof renderSummaries === "function") renderSummaries(); }
